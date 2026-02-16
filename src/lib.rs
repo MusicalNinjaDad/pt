@@ -1,3 +1,4 @@
+use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 
 pub fn identify(src: &str) -> Result<String, ParseError> {
@@ -16,6 +17,23 @@ pub fn identify(src: &str) -> Result<String, ParseError> {
         .unwrap();
     let testname: String = testfn.as_function_def_stmt().unwrap().name.to_string();
     Ok(testname)
+}
+
+fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
+    let stmts = parse_module(src)?.into_suite();
+    let pytests = stmts
+        .into_iter()
+        .filter(|stmt| {
+            stmt.is_function_def_stmt()
+                && stmt
+                    .as_function_def_stmt()
+                    .unwrap()
+                    .name
+                    .as_str()
+                    .starts_with("test_")
+        })
+        .collect();
+    Ok(pytests)
 }
 
 #[cfg(test)]
@@ -54,5 +72,20 @@ def test_passes():
     assert True
 ";
         assert_eq!("test_passes", identify(src).unwrap());
+    }
+
+    #[test]
+    fn two_tests() {
+        let src = r"
+import foo
+
+def test_fails():
+    assert False
+
+def test_passes():
+    assert True
+";
+        let pytests = get_tests(src).unwrap();
+        assert_eq!(2, pytests.len())
     }
 }
