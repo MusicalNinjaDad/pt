@@ -1,0 +1,10 @@
+[package]
+name = "pt"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+repository = "https://github.com/MusicalNinjaDad/pt"
+authors = ["MusicalNinjaDad <102677655+MusicalNinjaDad@users.noreply.github.com>"]
+license = "MIT"
+
+[dependencies]
