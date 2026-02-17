@@ -90,7 +90,7 @@ def test_passes():
     #[test]
     fn two_tests() {
         let src = r"
-import foo
+import pathlib
 
 def test_fails():
     assert False
