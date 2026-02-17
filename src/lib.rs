@@ -36,6 +36,19 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
     Ok(pytests)
 }
 
+fn gen_runner(pytests: &[Stmt]) -> String {
+    let indent = "    ";
+    let newline = "\n";
+    let mut test_runner: String = "if __name__ == 'main':".to_string() + newline;
+    pytests.iter().for_each(|pytest| {
+        test_runner += indent;
+        test_runner += pytest.as_function_def_stmt().unwrap().name.as_str();
+        test_runner += "()";
+        test_runner += newline;
+    });
+    test_runner
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,6 +99,12 @@ def test_passes():
     assert True
 ";
         let pytests = get_tests(src).unwrap();
-        assert_eq!(2, pytests.len())
+        assert_eq!(2, pytests.len());
+        let test_runner = r"if __name__ == 'main':
+    test_fails()
+    test_passes()
+";
+        let main = gen_runner(&pytests);
+        assert_eq!(test_runner, main);
     }
 }
