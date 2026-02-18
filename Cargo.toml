@@ -8,3 +8,5 @@ authors = ["MusicalNinjaDad <102677655+MusicalNinjaDad@users.noreply.github.com>
 license = "MIT"
 
 [dependencies]
+ruff_python_ast = { git = "https://github.com/astral-sh/ruff.git"}
+ruff_python_parser = { git = "https://github.com/astral-sh/ruff.git"}
