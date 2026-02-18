@@ -31,8 +31,10 @@ fn gen_runner(pytests: &[Stmt]) -> String {
     test_runner
 }
 
-pub fn generate(src: &str) -> Result<String, ParseError> {
-    todo!()
+pub fn generate(src: String) -> Result<String, ParseError> {
+    let pytests = get_tests(&src)?;
+    let runner = gen_runner(&pytests);
+    Ok(src + &runner)
 }
 
 #[cfg(test)]
