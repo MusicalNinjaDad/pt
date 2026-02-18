@@ -31,14 +31,28 @@ fn gen_runner(pytests: &[Stmt]) -> String {
     test_runner
 }
 
+pub fn generate(src: String) -> Result<String, ParseError> {
+    let pytests = get_tests(&src)?;
+    let runner = gen_runner(&pytests);
+    Ok(src + "\n" + &runner)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn get_tests_and_generate_runner() {
-        let src = r"
-import pathlib
+    fn one_test() {
+        let src = r"def test_passes():
+    assert True
+";
+        let pytests = get_tests(src).unwrap();
+        assert_eq!(1, pytests.len());
+    }
+
+    #[test]
+    fn import_and_two_tests() {
+        let src = r"import pathlib
 
 def test_fails():
     assert False
@@ -48,11 +62,5 @@ def test_passes():
 ";
         let pytests = get_tests(src).unwrap();
         assert_eq!(2, pytests.len());
-        let test_runner = r"if __name__ == '__main__':
-    test_fails()
-    test_passes()
-";
-        let main = gen_runner(&pytests);
-        assert_eq!(test_runner, main);
     }
 }
