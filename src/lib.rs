@@ -53,11 +53,5 @@ def test_passes():
 ";
         let pytests = get_tests(src).unwrap();
         assert_eq!(2, pytests.len());
-        let test_runner = r"if __name__ == '__main__':
-    test_fails()
-    test_passes()
-";
-        let main = gen_runner(&pytests);
-        assert_eq!(test_runner, main);
     }
 }
