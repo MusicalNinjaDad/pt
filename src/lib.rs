@@ -21,7 +21,7 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
 fn gen_runner(pytests: &[Stmt]) -> String {
     let indent = "    ";
     let newline = "\n";
-    let mut test_runner: String = "if __name__ == 'main':".to_string() + newline;
+    let mut test_runner: String = "if __name__ == '__main__':".to_string() + newline;
     pytests.iter().for_each(|pytest| {
         test_runner += indent;
         test_runner += pytest.as_function_def_stmt().unwrap().name.as_str();
