@@ -42,7 +42,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_tests_and_generate_runner() {
+    fn one_test() {
+        let src = r"def test_passes():
+    assert True
+";
+        let pytests = get_tests(src).unwrap();
+        assert_eq!(1, pytests.len());
+    }
+
+    #[test]
+    fn import_and_two_tests() {
         let src = r"import pathlib
 
 def test_fails():
