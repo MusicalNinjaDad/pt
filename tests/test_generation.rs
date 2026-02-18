@@ -4,8 +4,7 @@ use pt::generate;
 
 #[test]
 fn test_generation() {
-    let src = r"
-import pathlib
+    let src = r"import pathlib
 
 def test_fails():
     assert False

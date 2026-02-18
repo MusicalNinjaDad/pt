@@ -43,8 +43,7 @@ mod tests {
 
     #[test]
     fn get_tests_and_generate_runner() {
-        let src = r"
-import pathlib
+        let src = r"import pathlib
 
 def test_fails():
     assert False
