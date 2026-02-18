@@ -1,4 +1,4 @@
-use std::{fs, future, path::Path};
+use std::fs;
 
 use pt::generate;
 
