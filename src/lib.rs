@@ -36,7 +36,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn two_tests() {
+    fn get_tests_and_generate_runner() {
         let src = r"
 import pathlib
 
