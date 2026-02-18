@@ -31,6 +31,10 @@ fn gen_runner(pytests: &[Stmt]) -> String {
     test_runner
 }
 
+pub fn generate(src: &str) -> Result<String, ParseError> {
+    todo!()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
