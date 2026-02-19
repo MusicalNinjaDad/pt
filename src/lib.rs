@@ -21,12 +21,30 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
 fn gen_runner(pytests: &[Stmt]) -> String {
     let indent = "    ";
     let newline = "\n";
-    let mut test_runner: String = "if __name__ == '__main__':".to_string() + newline;
+    let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
+    test_runner += indent;
+    test_runner += "import traceback";
+    test_runner += newline;
     pytests.iter().for_each(|pytest| {
-        test_runner += indent;
-        test_runner += pytest.as_function_def_stmt().unwrap().name.as_str();
-        test_runner += "()";
-        test_runner += newline;
+        test_runner += &[
+            newline,
+            indent,
+            "try:",
+            newline,
+            indent,
+            indent,
+            pytest.as_function_def_stmt().unwrap().name.as_str(),
+            "()",
+            newline,
+            indent,
+            "except Exception:",
+            newline,
+            indent,
+            indent,
+            "traceback.print_exc()",
+            newline,
+        ]
+        .concat();
     });
     test_runner
 }
@@ -34,7 +52,7 @@ fn gen_runner(pytests: &[Stmt]) -> String {
 pub fn generate(src: String) -> Result<String, ParseError> {
     let pytests = get_tests(&src)?;
     let runner = gen_runner(&pytests);
-    Ok(src + "\n" + &runner)
+    Ok(src + "\n\n" + &runner)
 }
 
 #[cfg(test)]
@@ -54,8 +72,10 @@ mod tests {
     fn import_and_two_tests() {
         let src = r"import pathlib
 
+
 def test_fails():
     assert False
+
 
 def test_passes():
     assert True
