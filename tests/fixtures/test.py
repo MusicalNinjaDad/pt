@@ -12,12 +12,18 @@ def test_passes():
 if __name__ == "__main__":
     import traceback
 
+    print("test_fails")
     try:
         test_fails()
     except Exception:
         traceback.print_exc()
+    else:
+        print("pass")
 
+    print("test_passes")
     try:
         test_passes()
     except Exception:
         traceback.print_exc()
+    else:
+        print("pass")

@@ -26,14 +26,20 @@ fn gen_runner(pytests: &[Stmt]) -> String {
     test_runner += "import traceback";
     test_runner += newline;
     pytests.iter().for_each(|pytest| {
+        let testname = pytest.as_function_def_stmt().unwrap().name.as_str();
         test_runner += &[
+            newline,
+            indent,
+            "print(\"",
+            testname,
+            "\")",
             newline,
             indent,
             "try:",
             newline,
             indent,
             indent,
-            pytest.as_function_def_stmt().unwrap().name.as_str(),
+            testname,
             "()",
             newline,
             indent,
@@ -42,6 +48,13 @@ fn gen_runner(pytests: &[Stmt]) -> String {
             indent,
             indent,
             "traceback.print_exc()",
+            newline,
+            indent,
+            "else:",
+            newline,
+            indent,
+            indent,
+            "print(\"pass\")",
             newline,
         ]
         .concat();
