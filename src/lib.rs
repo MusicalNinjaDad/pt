@@ -21,15 +21,12 @@ enum TestStatus {
     Fail(Traceback),
 }
 
-impl From<String> for TestStatus {
-    fn from(value: String) -> Self {
-        Self::Fail(Traceback { text: value })
-    }
-}
-
 impl From<TestOutput<'_>> for TestStatus {
     fn from(output: TestOutput) -> Self {
-        Self::Pass
+        if output.contents.starts_with(output.id) {
+            return Self::Pass
+        }
+        Self::Fail(Traceback { text: output.contents.to_string()})
     }
 }
 
