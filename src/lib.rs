@@ -1,9 +1,21 @@
 use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 
-fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
+struct Pytest {
+    name: String,
+    code: Stmt
+}
+
+impl From<Stmt> for Pytest {
+    //TODO: convert to TryFrom and handle not a valid function_def
+    fn from(stmt: Stmt) -> Self {
+        Self { name: stmt.as_function_def_stmt().unwrap().name.to_string(), code: stmt }
+    }
+}
+
+fn get_tests(src: &str) -> Result<Vec<Pytest>, ParseError> {
     let stmts = parse_module(src)?.into_suite();
-    let pytests = stmts
+    let pytests: Vec<Pytest> = stmts
         .into_iter()
         .filter(|stmt| {
             stmt.is_function_def_stmt()
@@ -14,6 +26,7 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
                     .as_str()
                     .starts_with("test_")
         })
+        .map(Into::into)
         .collect();
     Ok(pytests)
 }
@@ -33,7 +46,7 @@ where
     dst.push_str(newline);
 }
 
-fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
+fn gen_runner<ID: AsRef<str>>(pytests: &[Pytest], id: ID) -> String {
     let indent = "    ";
     let newline = "\n";
     let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
@@ -41,7 +54,7 @@ fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
     test_runner += "import traceback";
     test_runner += newline;
     pytests.iter().for_each(|pytest| {
-        let testname = pytest.as_function_def_stmt().unwrap().name.as_str();
+        let testname = &pytest.name;
         test_runner.push_str(newline);
         push_python_line(
             &mut test_runner,
