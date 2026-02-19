@@ -18,23 +18,50 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
     Ok(pytests)
 }
 
-fn gen_runner(pytests: &[Stmt]) -> String {
+fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
+where
+    StrIter: IntoIterator<Item = &'strs str>,
+{
     let indent = "    ";
     let newline = "\n";
-    let mut test_runner: String = "if __name__ == '__main__':".to_string() + newline;
+    for _ in 0..indents {
+        dst.push_str(indent);
+    }
+    for text in contents {
+        dst.push_str(text);
+    }
+    dst.push_str(newline);
+}
+
+fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
+    let indent = "    ";
+    let newline = "\n";
+    let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
+    test_runner += indent;
+    test_runner += "import traceback";
+    test_runner += newline;
     pytests.iter().for_each(|pytest| {
-        test_runner += indent;
-        test_runner += pytest.as_function_def_stmt().unwrap().name.as_str();
-        test_runner += "()";
-        test_runner += newline;
+        let testname = pytest.as_function_def_stmt().unwrap().name.as_str();
+        test_runner.push_str(newline);
+        push_python_line(
+            &mut test_runner,
+            1,
+            ["print(\"", id.as_ref(), " running ", testname, "\")"],
+        );
+        push_python_line(&mut test_runner, 1, ["try:"]);
+        push_python_line(&mut test_runner, 2, [testname, "()"]);
+        push_python_line(&mut test_runner, 1, ["except Exception:"]);
+        push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
+        push_python_line(&mut test_runner, 1, ["else:"]);
+        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " pass\")"]);
     });
     test_runner
 }
 
-pub fn generate(src: String) -> Result<String, ParseError> {
+pub fn generate<ID: AsRef<str>>(src: String, id: ID) -> Result<String, ParseError> {
     let pytests = get_tests(&src)?;
-    let runner = gen_runner(&pytests);
-    Ok(src + "\n" + &runner)
+    let runner = gen_runner(&pytests, id);
+    Ok(src + "\n\n" + &runner)
 }
 
 #[cfg(test)]
@@ -54,8 +81,10 @@ mod tests {
     fn import_and_two_tests() {
         let src = r"import pathlib
 
+
 def test_fails():
     assert False
+
 
 def test_passes():
     assert True
