@@ -1,15 +1,34 @@
 use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 
+#[derive(Debug)]
 struct Pytest {
     name: String,
-    code: Stmt
+    code: Stmt,
+    status: TestStatus,
+}
+
+#[derive(Debug,Default)]
+enum TestStatus {
+    #[default]
+    NoRun,
+    Pass,
+    Fail(Traceback),
+}
+
+#[derive(Debug)]
+struct Traceback {
+    text: String,
 }
 
 impl From<Stmt> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(stmt: Stmt) -> Self {
-        Self { name: stmt.as_function_def_stmt().unwrap().name.to_string(), code: stmt }
+        Self {
+            name: stmt.as_function_def_stmt().unwrap().name.to_string(),
+            code: stmt,
+            status: Default::default(),
+        }
     }
 }
 
