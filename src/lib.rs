@@ -16,6 +16,12 @@ enum TestStatus {
     Fail(Traceback),
 }
 
+impl From<String> for TestStatus {
+    fn from(value: String) -> Self {
+        Self::Fail(Traceback { text: value })
+    }
+}
+
 #[derive(Debug)]
 struct Traceback {
     text: String,
@@ -123,5 +129,19 @@ def test_passes():
 ";
         let pytests = get_tests(src).unwrap();
         assert_eq!(2, pytests.len());
+    }
+
+    #[test]
+    fn parse_test_failure() {
+        let output = r#"Traceback (most recent call last):
+  File "/workspaces/pt/tests/fixtures/test.py", line 17, in <module>
+    test_fails()
+    ~~~~~~~~~~^^
+  File "/workspaces/pt/tests/fixtures/test.py", line 5, in test_fails
+    assert False
+           ^^^^^
+AssertionError"#;
+        let status: TestStatus = output.to_string().into();
+        assert!(matches!(status, TestStatus::Fail(_)));
     }
 }
