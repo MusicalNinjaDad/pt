@@ -8,7 +8,12 @@ struct Pytest {
     status: TestStatus,
 }
 
-#[derive(Debug,Default)]
+struct TestOutput<'a> {
+    id: &'a str,
+    contents: &'a str,
+}
+
+#[derive(Debug, Default)]
 enum TestStatus {
     #[default]
     NoRun,
@@ -19,6 +24,12 @@ enum TestStatus {
 impl From<String> for TestStatus {
     fn from(value: String) -> Self {
         Self::Fail(Traceback { text: value })
+    }
+}
+
+impl From<TestOutput<'_>> for TestStatus {
+    fn from(output: TestOutput) -> Self {
+        Self::Pass
     }
 }
 
@@ -143,5 +154,15 @@ def test_passes():
 AssertionError"#;
         let status: TestStatus = output.to_string().into();
         assert!(matches!(status, TestStatus::Fail(_)));
+    }
+
+    #[test]
+    fn parse_test_success() {
+        let output = TestOutput {
+            id: "UID",
+            contents: "UID pass",
+        };
+        let status: TestStatus = output.into();
+        assert!(matches!(status, TestStatus::Pass))
     }
 }
