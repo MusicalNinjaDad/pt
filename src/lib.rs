@@ -1,7 +1,7 @@
 use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Pytest {
     name: String,
     code: Stmt,
@@ -13,7 +13,7 @@ struct TestOutput<'a> {
     contents: &'a str,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 enum TestStatus {
     #[default]
     NoRun,
@@ -30,7 +30,7 @@ impl From<TestOutput<'_>> for TestStatus {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Traceback {
     text: String,
 }
@@ -151,7 +151,8 @@ def test_passes():
 AssertionError"#;
         let output = TestOutput {id: "UID", contents: stdout};
         let status: TestStatus = output.into();
-        assert!(matches!(status, TestStatus::Fail(_)));
+        let expected_traceback = Traceback{text: stdout.to_string()};
+        assert_eq!(status, TestStatus::Fail(expected_traceback));
     }
 
     #[test]
