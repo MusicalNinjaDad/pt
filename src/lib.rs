@@ -144,7 +144,7 @@ def test_passes():
 
     #[test]
     fn parse_test_failure() {
-        let output = r#"Traceback (most recent call last):
+        let stdout = r#"Traceback (most recent call last):
   File "/workspaces/pt/tests/fixtures/test.py", line 17, in <module>
     test_fails()
     ~~~~~~~~~~^^
@@ -152,7 +152,8 @@ def test_passes():
     assert False
            ^^^^^
 AssertionError"#;
-        let status: TestStatus = output.to_string().into();
+        let output = TestOutput {id: "UID", contents: stdout};
+        let status: TestStatus = output.into();
         assert!(matches!(status, TestStatus::Fail(_)));
     }
 
