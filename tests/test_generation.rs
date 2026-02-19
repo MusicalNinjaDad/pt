@@ -15,6 +15,6 @@ def test_passes():
     assert True
 ";
     let expected_runner = fs::read_to_string("./tests/fixtures/test.py").unwrap();
-    let runner = generate(src.to_string()).unwrap();
+    let runner = generate(src.to_string(), "UID").unwrap();
     assert_eq!(expected_runner, runner);
 }

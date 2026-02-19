@@ -18,7 +18,7 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
     Ok(pytests)
 }
 
-fn gen_runner(pytests: &[Stmt]) -> String {
+fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
     let indent = "    ";
     let newline = "\n";
     let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
@@ -31,6 +31,8 @@ fn gen_runner(pytests: &[Stmt]) -> String {
             newline,
             indent,
             "print(\"",
+            id.as_ref(),
+            " running ",
             testname,
             "\")",
             newline,
@@ -54,7 +56,9 @@ fn gen_runner(pytests: &[Stmt]) -> String {
             newline,
             indent,
             indent,
-            "print(\"pass\")",
+            "print(\"",
+            id.as_ref(),
+            " pass\")",
             newline,
         ]
         .concat();
@@ -62,9 +66,9 @@ fn gen_runner(pytests: &[Stmt]) -> String {
     test_runner
 }
 
-pub fn generate(src: String) -> Result<String, ParseError> {
+pub fn generate<ID: AsRef<str>>(src: String, id: ID) -> Result<String, ParseError> {
     let pytests = get_tests(&src)?;
-    let runner = gen_runner(&pytests);
+    let runner = gen_runner(&pytests, id);
     Ok(src + "\n\n" + &runner)
 }
 

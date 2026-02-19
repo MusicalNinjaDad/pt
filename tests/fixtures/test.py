@@ -12,18 +12,18 @@ def test_passes():
 if __name__ == "__main__":
     import traceback
 
-    print("test_fails")
+    print("UID running test_fails")
     try:
         test_fails()
     except Exception:
         traceback.print_exc()
     else:
-        print("pass")
+        print("UID pass")
 
-    print("test_passes")
+    print("UID running test_passes")
     try:
         test_passes()
     except Exception:
         traceback.print_exc()
     else:
-        print("pass")
+        print("UID pass")
