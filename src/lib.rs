@@ -42,41 +42,18 @@ fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
     test_runner += newline;
     pytests.iter().for_each(|pytest| {
         let testname = pytest.as_function_def_stmt().unwrap().name.as_str();
-        test_runner += &[
-            newline,
-            indent,
-            "print(\"",
-            id.as_ref(),
-            " running ",
-            testname,
-            "\")",
-            newline,
-            indent,
-            "try:",
-            newline,
-            indent,
-            indent,
-            testname,
-            "()",
-            newline,
-            indent,
-            "except Exception:",
-            newline,
-            indent,
-            indent,
-            "traceback.print_exc()",
-            newline,
-            indent,
-            "else:",
-            newline,
-            indent,
-            indent,
-            "print(\"",
-            id.as_ref(),
-            " pass\")",
-            newline,
-        ]
-        .concat();
+        test_runner.push_str(newline);
+        push_python_line(
+            &mut test_runner,
+            1,
+            ["print(\"", id.as_ref(), " running ", testname, "\")"],
+        );
+        push_python_line(&mut test_runner, 1, ["try:"]);
+        push_python_line(&mut test_runner, 2, [testname, "()"]);
+        push_python_line(&mut test_runner, 1, ["except Exception:"]);
+        push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
+        push_python_line(&mut test_runner, 1, ["else:"]);
+        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " pass\")"]);
     });
     test_runner
 }
