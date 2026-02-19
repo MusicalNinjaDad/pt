@@ -18,6 +18,21 @@ fn get_tests(src: &str) -> Result<Vec<Stmt>, ParseError> {
     Ok(pytests)
 }
 
+fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
+where
+    StrIter: IntoIterator<Item = &'strs str>,
+{
+    let indent = "    ";
+    let newline = "\n";
+    for _ in 0..indents {
+        dst.push_str(indent);
+    }
+    for text in contents {
+        dst.push_str(text);
+    }
+    dst.push_str(newline);
+}
+
 fn gen_runner<ID: AsRef<str>>(pytests: &[Stmt], id: ID) -> String {
     let indent = "    ";
     let newline = "\n";
