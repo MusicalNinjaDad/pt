@@ -4,18 +4,9 @@ use pt::{TestSuite, Traceback};
 
 #[test]
 fn basic() {
-    let src = r"import pathlib
-
-
-def test_fails():
-    assert False
-
-
-def test_passes():
-    assert True
-";
+    let src = fs::read_to_string("./tests/fixtures/basic/src.py").unwrap();
     let expected_runner = fs::read_to_string("./tests/fixtures/basic/test.py").unwrap();
-    let mut suite: TestSuite = src.try_into().unwrap();
+    let mut suite: TestSuite = src.as_str().try_into().unwrap();
     let runner = suite.runner("UID");
     assert_eq!(expected_runner, runner);
     let stdout = fs::read_to_string("./tests/fixtures/basic/stdout.out").unwrap();
