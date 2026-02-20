@@ -1,3 +1,4 @@
-UID running test_fails
-UID running test_passes
-UID pass
+UID test_fails RUNNING
+UID test_fails FAIL
+UID test_passes RUNNING
+UID test_passes PASS
