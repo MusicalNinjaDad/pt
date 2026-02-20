@@ -105,14 +105,15 @@ fn gen_runner<ID: AsRef<str>>(pytests: &TestSuite, id: ID) -> String {
         push_python_line(
             &mut test_runner,
             1,
-            ["print(\"", id.as_ref(), " running ", testname, "\")"],
+            ["print(\"", id.as_ref(), " ", testname, " RUNNING\")"],
         );
         push_python_line(&mut test_runner, 1, ["try:"]);
         push_python_line(&mut test_runner, 2, [testname, "()"]);
         push_python_line(&mut test_runner, 1, ["except Exception:"]);
+        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " ", testname, " FAIL\")"]);
         push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
         push_python_line(&mut test_runner, 1, ["else:"]);
-        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " pass\")"]);
+        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " ", testname, " PASS\")"]);
     });
     test_runner
 }
