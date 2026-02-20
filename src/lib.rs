@@ -37,16 +37,6 @@ struct Traceback {
     text: String,
 }
 
-impl From<Stmt> for Pytest {
-    //TODO: convert to TryFrom and handle not a valid function_def
-    fn from(stmt: Stmt) -> Self {
-        Self {
-            code: stmt.as_function_def_stmt().unwrap().clone(),
-            status: Default::default(),
-        }
-    }
-}
-
 impl From<StmtFunctionDef> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(fndef: StmtFunctionDef) -> Self {
