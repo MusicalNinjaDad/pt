@@ -76,7 +76,7 @@ impl TryFrom<&str> for TestSuite {
 }
 
 impl TestSuite {
-    pub fn runner<ID: AsRef<str>>(self, id: ID) -> String {
+    pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
         let indent = "    ";
         let newline = "\n";
         let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
@@ -106,7 +106,7 @@ impl TestSuite {
                 ["print(\"", id.as_ref(), " ", testname, " PASS\")"],
             );
         });
-        self.src + "\n\n" + &test_runner
+        self.src.clone() + "\n\n" + &test_runner
     }
 }
 
