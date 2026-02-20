@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 
@@ -62,7 +63,7 @@ impl From<StmtFunctionDef> for Pytest {
 }
 
 struct TestSuite {
-    tests: HashMap<String, Pytest>,
+    tests: IndexMap<String, Pytest>,
 }
 
 impl FromIterator<Stmt> for TestSuite {
