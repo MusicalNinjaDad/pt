@@ -11,6 +11,7 @@ fn basic() {
     let fixtures = PathBuf::from("./tests/fixtures/basic");
     let src = fs::read_to_string(fixtures.join("src.py")).unwrap();
     let mut suite = TestSuite::try_from(src.as_str()).unwrap();
+    assert_eq!(2, suite.tests.len());
     let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
     assert_eq!(expected_runner, suite.runner(id));
     let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
@@ -33,6 +34,7 @@ fn complex() {
     let src = fs::read_to_string(fixtures.join("src.py")).unwrap();
     let mut suite = TestSuite::try_from(src.as_str()).unwrap();
     let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
+    assert_eq!(3, suite.tests.len());
     assert_eq!(expected_runner, suite.runner(id));
     let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
     let stderr = fs::read_to_string(fixtures.join("stderr.out")).unwrap();
