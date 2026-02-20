@@ -97,7 +97,6 @@ fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
                     .as_str()
                     .starts_with("test_")
         })
-        .map(Into::into)
         .collect();
     Ok(pytests)
 }
