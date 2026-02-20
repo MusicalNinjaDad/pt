@@ -26,23 +26,6 @@ pub struct Traceback {
     text: String,
 }
 
-#[derive(Debug, PartialEq)]
-struct TestOutput<'a> {
-    id: &'a str,
-    contents: &'a str,
-}
-
-impl From<TestOutput<'_>> for TestStatus {
-    fn from(output: TestOutput) -> Self {
-        if output.contents.starts_with(output.id) {
-            return Self::Pass;
-        }
-        Self::Fail(Traceback {
-            text: output.contents.to_string(),
-        })
-    }
-}
-
 impl From<StmtFunctionDef> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(fndef: StmtFunctionDef) -> Self {
@@ -178,36 +161,5 @@ def test_passes():
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));
-    }
-
-    #[test]
-    fn parse_test_failure() {
-        let stdout = r#"Traceback (most recent call last):
-  File "/workspaces/pt/tests/fixtures/test.py", line 17, in <module>
-    test_fails()
-    ~~~~~~~~~~^^
-  File "/workspaces/pt/tests/fixtures/test.py", line 5, in test_fails
-    assert False
-           ^^^^^
-AssertionError"#;
-        let output = TestOutput {
-            id: "UID",
-            contents: stdout,
-        };
-        let status: TestStatus = output.into();
-        let expected_traceback = Traceback {
-            text: stdout.to_string(),
-        };
-        assert_eq!(status, TestStatus::Fail(expected_traceback));
-    }
-
-    #[test]
-    fn parse_test_success() {
-        let output = TestOutput {
-            id: "UID",
-            contents: "UID pass",
-        };
-        let status: TestStatus = output.into();
-        assert!(matches!(status, TestStatus::Pass))
     }
 }
