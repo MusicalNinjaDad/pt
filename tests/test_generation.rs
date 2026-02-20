@@ -16,6 +16,6 @@ def test_passes():
 ";
     let expected_runner = fs::read_to_string("./tests/fixtures/test.py").unwrap();
     let suite: TestSuite = src.try_into().unwrap();
-    let runner = suite.runner();
+    let runner = suite.runner("UID");
     assert_eq!(expected_runner, runner);
 }

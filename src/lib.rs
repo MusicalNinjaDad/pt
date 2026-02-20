@@ -76,8 +76,7 @@ impl TryFrom<&str> for TestSuite {
 }
 
 impl TestSuite {
-    pub fn runner(self) -> String {
-        let id = "UID";
+    pub fn runner<ID: AsRef<str>>(self, id: ID) -> String {
         let indent = "    ";
         let newline = "\n";
         let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
@@ -89,7 +88,7 @@ impl TestSuite {
             push_python_line(
                 &mut test_runner,
                 1,
-                ["print(\"", id, " ", testname, " RUNNING\")"],
+                ["print(\"", id.as_ref(), " ", testname, " RUNNING\")"],
             );
             push_python_line(&mut test_runner, 1, ["try:"]);
             push_python_line(&mut test_runner, 2, [testname, "()"]);
@@ -97,14 +96,14 @@ impl TestSuite {
             push_python_line(
                 &mut test_runner,
                 2,
-                ["print(\"", id, " ", testname, " FAIL\")"],
+                ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
             );
             push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
             push_python_line(&mut test_runner, 1, ["else:"]);
             push_python_line(
                 &mut test_runner,
                 2,
-                ["print(\"", id, " ", testname, " PASS\")"],
+                ["print(\"", id.as_ref(), " ", testname, " PASS\")"],
             );
         });
         self.src + "\n\n" + &test_runner
