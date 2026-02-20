@@ -108,6 +108,9 @@ impl TestSuite {
         });
         self.src.clone() + "\n\n" + &test_runner
     }
+    pub fn update_status (&mut self, stdout: String, stderr: String) {
+        todo!()
+    }
 }
 
 fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
