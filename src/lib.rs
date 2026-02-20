@@ -1,4 +1,6 @@
-use ruff_python_ast::Stmt;
+use std::collections::HashMap;
+
+use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 
 #[derive(Debug, PartialEq)]
@@ -24,9 +26,11 @@ enum TestStatus {
 impl From<TestOutput<'_>> for TestStatus {
     fn from(output: TestOutput) -> Self {
         if output.contents.starts_with(output.id) {
-            return Self::Pass
+            return Self::Pass;
         }
-        Self::Fail(Traceback { text: output.contents.to_string()})
+        Self::Fail(Traceback {
+            text: output.contents.to_string(),
+        })
     }
 }
 
@@ -46,9 +50,51 @@ impl From<Stmt> for Pytest {
     }
 }
 
-fn get_tests(src: &str) -> Result<Vec<Pytest>, ParseError> {
+impl From<StmtFunctionDef> for Pytest {
+    //TODO: convert to TryFrom and handle not a valid function_def
+    fn from(fndef: StmtFunctionDef) -> Self {
+        Self {
+            name: fndef.name.to_string(),
+            code: Stmt::FunctionDef(fndef),
+            status: Default::default(),
+        }
+    }
+}
+
+struct TestSuite {
+    tests: HashMap<String, Pytest>,
+}
+
+impl FromIterator<Stmt> for TestSuite {
+    fn from_iter<T: IntoIterator<Item = Stmt>>(iter: T) -> Self {
+        Self {
+            tests: iter
+                .into_iter()
+                .filter_map(|stmt| -> Option<(String, Pytest)> {
+                    match stmt {
+                        Stmt::FunctionDef(function)
+                            if function.name.as_str().starts_with("test_") =>
+                        {
+                            Some((function.name.to_string(), function.into()))
+                        }
+                        _ => None,
+                    }
+                })
+                .collect(),
+        }
+    }
+}
+
+impl TestSuite {
+    fn add_test(&mut self, pytest: Pytest) -> Option<Pytest> {
+        let testname = pytest.name.clone();
+        self.tests.insert(testname, pytest)
+    }
+}
+
+fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
     let stmts = parse_module(src)?.into_suite();
-    let pytests: Vec<Pytest> = stmts
+    let pytests: TestSuite = stmts
         .into_iter()
         .filter(|stmt| {
             stmt.is_function_def_stmt()
@@ -79,14 +125,14 @@ where
     dst.push_str(newline);
 }
 
-fn gen_runner<ID: AsRef<str>>(pytests: &[Pytest], id: ID) -> String {
+fn gen_runner<ID: AsRef<str>>(pytests: &TestSuite, id: ID) -> String {
     let indent = "    ";
     let newline = "\n";
     let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
     test_runner += indent;
     test_runner += "import traceback";
     test_runner += newline;
-    pytests.iter().for_each(|pytest| {
+    pytests.tests.values().for_each(|pytest| {
         let testname = &pytest.name;
         test_runner.push_str(newline);
         push_python_line(
@@ -120,7 +166,8 @@ mod tests {
     assert True
 ";
         let pytests = get_tests(src).unwrap();
-        assert_eq!(1, pytests.len());
+        assert_eq!(1, pytests.tests.len());
+        assert!(pytests.tests.contains_key("test_passes"));
     }
 
     #[test]
@@ -136,7 +183,9 @@ def test_passes():
     assert True
 ";
         let pytests = get_tests(src).unwrap();
-        assert_eq!(2, pytests.len());
+        assert_eq!(2, pytests.tests.len());
+        assert!(pytests.tests.contains_key("test_fails"));
+        assert!(pytests.tests.contains_key("test_passes"));
     }
 
     #[test]
@@ -149,9 +198,14 @@ def test_passes():
     assert False
            ^^^^^
 AssertionError"#;
-        let output = TestOutput {id: "UID", contents: stdout};
+        let output = TestOutput {
+            id: "UID",
+            contents: stdout,
+        };
         let status: TestStatus = output.into();
-        let expected_traceback = Traceback{text: stdout.to_string()};
+        let expected_traceback = Traceback {
+            text: stdout.to_string(),
+        };
         assert_eq!(status, TestStatus::Fail(expected_traceback));
     }
 
