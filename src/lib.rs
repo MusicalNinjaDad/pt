@@ -4,7 +4,6 @@ use ruff_python_parser::{ParseError, parse_module};
 
 #[derive(Debug, PartialEq)]
 struct Pytest {
-    name: String,
     code: StmtFunctionDef,
     status: TestStatus,
 }
@@ -42,7 +41,6 @@ impl From<Stmt> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(stmt: Stmt) -> Self {
         Self {
-            name: stmt.as_function_def_stmt().unwrap().name.to_string(),
             code: stmt.as_function_def_stmt().unwrap().clone(),
             status: Default::default(),
         }
@@ -53,7 +51,6 @@ impl From<StmtFunctionDef> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(fndef: StmtFunctionDef) -> Self {
         Self {
-            name: fndef.name.to_string(),
             code: fndef,
             status: Default::default(),
         }
