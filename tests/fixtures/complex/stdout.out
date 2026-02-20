@@ -2,3 +2,5 @@ UID test_fails RUNNING
 UID test_fails FAIL
 UID test_passes RUNNING
 UID test_passes PASS
+UID test_seven_is_six RUNNING
+UID test_seven_is_six FAIL
