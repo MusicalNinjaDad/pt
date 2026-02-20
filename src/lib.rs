@@ -2,15 +2,14 @@ use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 
+struct TestSuite {
+    tests: IndexMap<String, Pytest>,
+}
+
 #[derive(Debug, PartialEq)]
 struct Pytest {
     code: StmtFunctionDef,
     status: TestStatus,
-}
-
-struct TestOutput<'a> {
-    id: &'a str,
-    contents: &'a str,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -19,6 +18,15 @@ enum TestStatus {
     NoRun,
     Pass,
     Fail(Traceback),
+}
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Traceback {
+    text: String,
+}
+
+struct TestOutput<'a> {
+    id: &'a str,
+    contents: &'a str,
 }
 
 impl From<TestOutput<'_>> for TestStatus {
@@ -32,11 +40,6 @@ impl From<TestOutput<'_>> for TestStatus {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct Traceback {
-    text: String,
-}
-
 impl From<StmtFunctionDef> for Pytest {
     //TODO: convert to TryFrom and handle not a valid function_def
     fn from(fndef: StmtFunctionDef) -> Self {
@@ -45,10 +48,6 @@ impl From<StmtFunctionDef> for Pytest {
             status: Default::default(),
         }
     }
-}
-
-struct TestSuite {
-    tests: IndexMap<String, Pytest>,
 }
 
 impl FromIterator<Stmt> for TestSuite {
