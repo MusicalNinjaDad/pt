@@ -21,4 +21,5 @@ def test_passes():
     let stdout = fs::read_to_string("./tests/fixtures/stdout.out").unwrap();
     let stderr = fs::read_to_string("./tests/fixtures/stderr.out").unwrap();
     suite.update_status(stdout, stderr);
+    assert!(matches!(suite.tests["test_passes"].status, pt::TestStatus::Pass))
 }

@@ -5,24 +5,24 @@ use ruff_python_parser::{ParseError, parse_module};
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
     src: String,
-    tests: IndexMap<String, Pytest>,
+    pub tests: IndexMap<String, Pytest>,
 }
 
 #[derive(Debug, PartialEq)]
-struct Pytest {
+pub struct Pytest {
     code: StmtFunctionDef,
-    status: TestStatus,
+    pub status: TestStatus,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
-enum TestStatus {
+pub enum TestStatus {
     #[default]
     NoRun,
     Pass,
     Fail(Traceback),
 }
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct Traceback {
+pub struct Traceback {
     text: String,
 }
 
@@ -109,7 +109,7 @@ impl TestSuite {
         self.src.clone() + "\n\n" + &test_runner
     }
     pub fn update_status (&mut self, stdout: String, stderr: String) {
-        todo!()
+        
     }
 }
 
