@@ -2,6 +2,7 @@ use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 
+#[derive(Debug, PartialEq)]
 struct TestSuite {
     tests: IndexMap<String, Pytest>,
 }
@@ -24,6 +25,7 @@ struct Traceback {
     text: String,
 }
 
+#[derive(Debug, PartialEq)]
 struct TestOutput<'a> {
     id: &'a str,
     contents: &'a str,
