@@ -20,6 +20,6 @@ def test_passes():
     assert_eq!(expected_runner, runner);
     let stdout = fs::read_to_string("./tests/fixtures/stdout.out").unwrap();
     let stderr = fs::read_to_string("./tests/fixtures/stderr.out").unwrap();
-    suite.update_status(stdout, stderr);
+    suite.update_status("UID", &stdout, &stderr);
     assert!(matches!(suite.tests["test_passes"].status, pt::TestStatus::Pass))
 }

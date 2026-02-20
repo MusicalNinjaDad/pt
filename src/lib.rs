@@ -75,6 +75,12 @@ impl TryFrom<&str> for TestSuite {
     }
 }
 
+impl From<&str> for Traceback {
+    fn from(text: &str) -> Self {
+        Self { text: text.to_string() }
+    }
+}
+
 impl TestSuite {
     pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
         let indent = "    ";
@@ -108,8 +114,22 @@ impl TestSuite {
         });
         self.src.clone() + "\n\n" + &test_runner
     }
-    pub fn update_status (&mut self, stdout: String, stderr: String) {
-        
+
+    pub fn update_status(&mut self, id: &str, stdout: &str, stderr: &str) {
+        for line in stdout.lines() {
+            let mut words = line.split_ascii_whitespace();
+            if words.next() == Some(id)
+                && let Some(testname) = words.next()
+                && self.tests.contains_key(testname)
+            {
+                match words.next() {
+                    Some("PASS") => self.tests[testname].status = TestStatus::Pass,
+                    Some("FAIL") => self.tests[testname].status = TestStatus::Fail(stderr.into()),
+                    Some("RUNNING") => (),
+                    _ => todo!(),
+                }
+            }
+        }
     }
 }
 
