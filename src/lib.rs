@@ -84,13 +84,6 @@ impl FromIterator<Stmt> for TestSuite {
     }
 }
 
-impl TestSuite {
-    fn add_test(&mut self, pytest: Pytest) -> Option<Pytest> {
-        let testname = pytest.name.clone();
-        self.tests.insert(testname, pytest)
-    }
-}
-
 fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
     let stmts = parse_module(src)?.into_suite();
     let pytests: TestSuite = stmts
