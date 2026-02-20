@@ -4,6 +4,7 @@ use ruff_python_parser::{ParseError, parse_module};
 
 #[derive(Debug, PartialEq)]
 struct TestSuite {
+    src: String,
     tests: IndexMap<String, Pytest>,
 }
 
@@ -52,11 +53,11 @@ impl From<StmtFunctionDef> for Pytest {
     }
 }
 
-impl FromIterator<Stmt> for TestSuite {
-    fn from_iter<T: IntoIterator<Item = Stmt>>(iter: T) -> Self {
-        Self {
-            tests: iter
-                .into_iter()
+impl TryFrom<&str> for TestSuite {
+    type Error = ParseError;
+    fn try_from(src: &str) -> Result<Self, Self::Error> {
+            let tests: IndexMap<String, Pytest> = parse_module(src)?.into_suite()
+            .into_iter()
                 .filter_map(|stmt| -> Option<(String, Pytest)> {
                     match stmt {
                         Stmt::FunctionDef(function)
@@ -67,15 +68,9 @@ impl FromIterator<Stmt> for TestSuite {
                         _ => None,
                     }
                 })
-                .collect(),
-        }
+                .collect();
+            Ok(Self { src: src.to_string(), tests })
     }
-}
-
-fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
-    let stmts = parse_module(src)?.into_suite();
-    let pytests: TestSuite = stmts.into_iter().collect();
-    Ok(pytests)
 }
 
 fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
@@ -110,19 +105,27 @@ fn gen_runner<ID: AsRef<str>>(pytests: &TestSuite, id: ID) -> String {
         push_python_line(&mut test_runner, 1, ["try:"]);
         push_python_line(&mut test_runner, 2, [testname, "()"]);
         push_python_line(&mut test_runner, 1, ["except Exception:"]);
-        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " ", testname, " FAIL\")"]);
+        push_python_line(
+            &mut test_runner,
+            2,
+            ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
+        );
         push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
         push_python_line(&mut test_runner, 1, ["else:"]);
-        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " ", testname, " PASS\")"]);
+        push_python_line(
+            &mut test_runner,
+            2,
+            ["print(\"", id.as_ref(), " ", testname, " PASS\")"],
+        );
     });
     test_runner
 }
 
-pub fn generate<ID: AsRef<str>>(src: String, id: ID) -> Result<String, ParseError> {
-    let pytests = get_tests(&src)?;
-    let runner = gen_runner(&pytests, id);
-    Ok(src + "\n\n" + &runner)
-}
+// pub fn generate<ID: AsRef<str>>(src: String, id: ID) -> Result<TestSuite, ParseError> {
+//     let pytests = get_tests(&src)?;
+//     let runner = gen_runner(&pytests, id);
+//     Ok(src + "\n\n" + &runner)
+// }
 
 #[cfg(test)]
 mod tests {
@@ -133,7 +136,7 @@ mod tests {
         let src = r"def test_passes():
     assert True
 ";
-        let pytests = get_tests(src).unwrap();
+        let pytests: TestSuite = src.try_into().unwrap();
         assert_eq!(1, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_passes"));
     }
@@ -150,7 +153,7 @@ def test_fails():
 def test_passes():
     assert True
 ";
-        let pytests = get_tests(src).unwrap();
+        let pytests: TestSuite = src.try_into().unwrap();
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));
