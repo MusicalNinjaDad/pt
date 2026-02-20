@@ -105,11 +105,11 @@ impl TestSuite {
             let mut words = line.split_ascii_whitespace();
             if words.next() == Some(id)
                 && let Some(testname) = words.next()
-                && self.tests.contains_key(testname)
+                && let Some(test) = self.tests.get_mut(testname)  
             {
                 match words.next() {
-                    Some("PASS") => self.tests[testname].status = TestStatus::Pass,
-                    Some("FAIL") => self.tests[testname].status = TestStatus::Fail(stderr.into()),
+                    Some("PASS") => test.status = TestStatus::Pass,
+                    Some("FAIL") => test.status = TestStatus::Fail(stderr.into()),
                     Some("RUNNING") => (),
                     _ => todo!(),
                 }
