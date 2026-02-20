@@ -1,12 +1,20 @@
 import pathlib
 
 
+def seven():
+    return 7
+
+
 def test_fails():
     assert False
 
 
 def test_passes():
     assert True
+
+
+def test_seven_is_six():
+    assert seven() == 6
 
 
 if __name__ == "__main__":
@@ -29,3 +37,12 @@ if __name__ == "__main__":
         traceback.print_exc()
     else:
         print("UID test_passes PASS")
+
+    print("UID test_seven_is_six RUNNING")
+    try:
+        test_seven_is_six()
+    except Exception:
+        print("UID test_seven_is_six FAIL")
+        traceback.print_exc()
+    else:
+        print("UID test_seven_is_six PASS")
