@@ -60,7 +60,9 @@ impl TryFrom<&str> for TestSuite {
 
 impl From<&str> for Traceback {
     fn from(text: &str) -> Self {
-        Self { text: text.to_string() }
+        Self {
+            text: text.to_string(),
+        }
     }
 }
 

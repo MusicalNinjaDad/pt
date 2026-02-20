@@ -21,7 +21,12 @@ def test_passes():
     let stdout = fs::read_to_string("./tests/fixtures/stdout.out").unwrap();
     let stderr = fs::read_to_string("./tests/fixtures/stderr.out").unwrap();
     suite.update_status("UID", &stdout, &stderr);
-    assert!(matches!(&suite.tests["test_passes"].status, pt::TestStatus::Pass));
+    assert!(matches!(
+        &suite.tests["test_passes"].status,
+        pt::TestStatus::Pass
+    ));
     let expect_tb: Traceback = stderr.as_str().into();
-    assert!(matches!(&suite.tests["test_fails"].status, pt::TestStatus::Fail(tb) if tb == &expect_tb));
+    assert!(
+        matches!(&suite.tests["test_fails"].status, pt::TestStatus::Fail(tb) if tb == &expect_tb)
+    );
 }
