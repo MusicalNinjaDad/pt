@@ -86,18 +86,7 @@ impl FromIterator<Stmt> for TestSuite {
 
 fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
     let stmts = parse_module(src)?.into_suite();
-    let pytests: TestSuite = stmts
-        .into_iter()
-        .filter(|stmt| {
-            stmt.is_function_def_stmt()
-                && stmt
-                    .as_function_def_stmt()
-                    .unwrap()
-                    .name
-                    .as_str()
-                    .starts_with("test_")
-        })
-        .collect();
+    let pytests: TestSuite = stmts.into_iter().collect();
     Ok(pytests)
 }
 
