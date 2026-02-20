@@ -112,8 +112,7 @@ fn gen_runner<ID: AsRef<str>>(pytests: &TestSuite, id: ID) -> String {
     test_runner += indent;
     test_runner += "import traceback";
     test_runner += newline;
-    pytests.tests.values().for_each(|pytest| {
-        let testname = &pytest.name;
+    pytests.tests.keys().for_each(|testname| {
         test_runner.push_str(newline);
         push_python_line(
             &mut test_runner,
