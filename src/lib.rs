@@ -3,43 +3,27 @@ use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 
 #[derive(Debug, PartialEq)]
-struct TestSuite {
-    tests: IndexMap<String, Pytest>,
+pub struct TestSuite {
+    src: String,
+    pub tests: IndexMap<String, Pytest>,
 }
 
 #[derive(Debug, PartialEq)]
-struct Pytest {
+pub struct Pytest {
     code: StmtFunctionDef,
-    status: TestStatus,
+    pub status: TestStatus,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
-enum TestStatus {
+pub enum TestStatus {
     #[default]
     NoRun,
     Pass,
     Fail(Traceback),
 }
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct Traceback {
+pub struct Traceback {
     text: String,
-}
-
-#[derive(Debug, PartialEq)]
-struct TestOutput<'a> {
-    id: &'a str,
-    contents: &'a str,
-}
-
-impl From<TestOutput<'_>> for TestStatus {
-    fn from(output: TestOutput) -> Self {
-        if output.contents.starts_with(output.id) {
-            return Self::Pass;
-        }
-        Self::Fail(Traceback {
-            text: output.contents.to_string(),
-        })
-    }
 }
 
 impl From<StmtFunctionDef> for Pytest {
@@ -52,30 +36,86 @@ impl From<StmtFunctionDef> for Pytest {
     }
 }
 
-impl FromIterator<Stmt> for TestSuite {
-    fn from_iter<T: IntoIterator<Item = Stmt>>(iter: T) -> Self {
-        Self {
-            tests: iter
-                .into_iter()
-                .filter_map(|stmt| -> Option<(String, Pytest)> {
-                    match stmt {
-                        Stmt::FunctionDef(function)
-                            if function.name.as_str().starts_with("test_") =>
-                        {
-                            Some((function.name.to_string(), function.into()))
-                        }
-                        _ => None,
+impl TryFrom<&str> for TestSuite {
+    type Error = ParseError;
+    fn try_from(src: &str) -> Result<Self, Self::Error> {
+        let tests: IndexMap<String, Pytest> = parse_module(src)?
+            .into_suite()
+            .into_iter()
+            .filter_map(|stmt| -> Option<(String, Pytest)> {
+                match stmt {
+                    Stmt::FunctionDef(function) if function.name.as_str().starts_with("test_") => {
+                        Some((function.name.to_string(), function.into()))
                     }
-                })
-                .collect(),
+                    _ => None,
+                }
+            })
+            .collect();
+        Ok(Self {
+            src: src.to_string(),
+            tests,
+        })
+    }
+}
+
+impl From<&str> for Traceback {
+    fn from(text: &str) -> Self {
+        Self {
+            text: text.to_string(),
         }
     }
 }
 
-fn get_tests(src: &str) -> Result<TestSuite, ParseError> {
-    let stmts = parse_module(src)?.into_suite();
-    let pytests: TestSuite = stmts.into_iter().collect();
-    Ok(pytests)
+impl TestSuite {
+    pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
+        let indent = "    ";
+        let newline = "\n";
+        let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
+        test_runner += indent;
+        test_runner += "import traceback";
+        test_runner += newline;
+        self.tests.keys().for_each(|testname| {
+            test_runner.push_str(newline);
+            push_python_line(
+                &mut test_runner,
+                1,
+                ["print(\"", id.as_ref(), " ", testname, " RUNNING\")"],
+            );
+            push_python_line(&mut test_runner, 1, ["try:"]);
+            push_python_line(&mut test_runner, 2, [testname, "()"]);
+            push_python_line(&mut test_runner, 1, ["except Exception:"]);
+            push_python_line(
+                &mut test_runner,
+                2,
+                ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
+            );
+            push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
+            push_python_line(&mut test_runner, 1, ["else:"]);
+            push_python_line(
+                &mut test_runner,
+                2,
+                ["print(\"", id.as_ref(), " ", testname, " PASS\")"],
+            );
+        });
+        self.src.clone() + "\n\n" + &test_runner
+    }
+
+    pub fn update_status(&mut self, id: &str, stdout: &str, stderr: &str) {
+        for line in stdout.lines() {
+            let mut words = line.split_ascii_whitespace();
+            if words.next() == Some(id)
+                && let Some(testname) = words.next()
+                && let Some(test) = self.tests.get_mut(testname)
+            {
+                match words.next() {
+                    Some("PASS") => test.status = TestStatus::Pass,
+                    Some("FAIL") => test.status = TestStatus::Fail(stderr.into()),
+                    Some("RUNNING") => (),
+                    _ => todo!(),
+                }
+            }
+        }
+    }
 }
 
 fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
@@ -93,36 +133,6 @@ where
     dst.push_str(newline);
 }
 
-fn gen_runner<ID: AsRef<str>>(pytests: &TestSuite, id: ID) -> String {
-    let indent = "    ";
-    let newline = "\n";
-    let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
-    test_runner += indent;
-    test_runner += "import traceback";
-    test_runner += newline;
-    pytests.tests.keys().for_each(|testname| {
-        test_runner.push_str(newline);
-        push_python_line(
-            &mut test_runner,
-            1,
-            ["print(\"", id.as_ref(), " running ", testname, "\")"],
-        );
-        push_python_line(&mut test_runner, 1, ["try:"]);
-        push_python_line(&mut test_runner, 2, [testname, "()"]);
-        push_python_line(&mut test_runner, 1, ["except Exception:"]);
-        push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
-        push_python_line(&mut test_runner, 1, ["else:"]);
-        push_python_line(&mut test_runner, 2, ["print(\"", id.as_ref(), " pass\")"]);
-    });
-    test_runner
-}
-
-pub fn generate<ID: AsRef<str>>(src: String, id: ID) -> Result<String, ParseError> {
-    let pytests = get_tests(&src)?;
-    let runner = gen_runner(&pytests, id);
-    Ok(src + "\n\n" + &runner)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -132,7 +142,7 @@ mod tests {
         let src = r"def test_passes():
     assert True
 ";
-        let pytests = get_tests(src).unwrap();
+        let pytests: TestSuite = src.try_into().unwrap();
         assert_eq!(1, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_passes"));
     }
@@ -149,40 +159,9 @@ def test_fails():
 def test_passes():
     assert True
 ";
-        let pytests = get_tests(src).unwrap();
+        let pytests: TestSuite = src.try_into().unwrap();
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));
-    }
-
-    #[test]
-    fn parse_test_failure() {
-        let stdout = r#"Traceback (most recent call last):
-  File "/workspaces/pt/tests/fixtures/test.py", line 17, in <module>
-    test_fails()
-    ~~~~~~~~~~^^
-  File "/workspaces/pt/tests/fixtures/test.py", line 5, in test_fails
-    assert False
-           ^^^^^
-AssertionError"#;
-        let output = TestOutput {
-            id: "UID",
-            contents: stdout,
-        };
-        let status: TestStatus = output.into();
-        let expected_traceback = Traceback {
-            text: stdout.to_string(),
-        };
-        assert_eq!(status, TestStatus::Fail(expected_traceback));
-    }
-
-    #[test]
-    fn parse_test_success() {
-        let output = TestOutput {
-            id: "UID",
-            contents: "UID pass",
-        };
-        let status: TestStatus = output.into();
-        assert!(matches!(status, TestStatus::Pass))
     }
 }
