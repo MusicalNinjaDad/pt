@@ -46,10 +46,11 @@ fn complex() {
         pt::TestStatus::Pass
     ));
     for failed_test in ["test_fails", "test_seven_is_six"] {
-        let expect_tb: Traceback = fs::read_to_string(fixtures.join(failed_test).with_added_extension("tb"))
-            .unwrap()
-            .as_str()
-            .into();
+        let expect_tb: Traceback =
+            fs::read_to_string(fixtures.join(failed_test).with_added_extension("tb"))
+                .unwrap()
+                .as_str()
+                .into();
         let tf_status = &suite.tests[failed_test].status;
         assert!(
             matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
