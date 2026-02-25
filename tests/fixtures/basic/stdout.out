@@ -1,0 +1,12 @@
+UID test_fails RUNNING
+Traceback (most recent call last):
+  File "/workspaces/pt/tests/fixtures/basic/run.py", line 18, in <module>
+    test_fails()
+    ~~~~~~~~~~^^
+  File "/workspaces/pt/tests/fixtures/basic/run.py", line 5, in test_fails
+    assert False
+           ^^^^^
+AssertionError
+UID test_fails FAIL
+UID test_passes RUNNING
+UID test_passes PASS

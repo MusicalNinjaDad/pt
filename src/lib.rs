@@ -58,11 +58,9 @@ impl TryFrom<&str> for TestSuite {
     }
 }
 
-impl From<&str> for Traceback {
-    fn from(text: &str) -> Self {
-        Self {
-            text: text.to_string(),
-        }
+impl From<String> for Traceback {
+    fn from(text: String) -> Self {
+        Self { text }
     }
 }
 
@@ -74,6 +72,7 @@ impl TestSuite {
         test_runner += indent;
         test_runner += "import traceback";
         test_runner += newline;
+        push_python_line(&mut test_runner, 1, ["import sys"]);
         self.tests.keys().for_each(|testname| {
             test_runner.push_str(newline);
             push_python_line(
@@ -87,9 +86,13 @@ impl TestSuite {
             push_python_line(
                 &mut test_runner,
                 2,
+                ["traceback.print_exc(file=sys.stdout)"],
+            );
+            push_python_line(
+                &mut test_runner,
+                2,
                 ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
             );
-            push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
             push_python_line(&mut test_runner, 1, ["else:"]);
             push_python_line(
                 &mut test_runner,
@@ -100,18 +103,33 @@ impl TestSuite {
         self.src.clone() + "\n\n" + &test_runner
     }
 
-    pub fn update_status(&mut self, id: &str, stdout: &str, stderr: &str) {
+    pub fn update_status(&mut self, id: &str, stdout: &str) {
+        let mut tb_buf = String::new();
         for line in stdout.lines() {
             let mut words = line.split_ascii_whitespace();
-            if words.next() == Some(id)
-                && let Some(testname) = words.next()
-                && let Some(test) = self.tests.get_mut(testname)
-            {
-                match words.next() {
-                    Some("PASS") => test.status = TestStatus::Pass,
-                    Some("FAIL") => test.status = TestStatus::Fail(stderr.into()),
-                    Some("RUNNING") => (),
-                    _ => todo!(),
+            match words.next() {
+                Some("Traceback") => {
+                    tb_buf = line.to_string();
+                }
+                Some(id_) if id_ == id => {
+                    if let Some(testname) = words.next()
+                        && let Some(test) = self.tests.get_mut(testname)
+                    {
+                        match words.next() {
+                            Some("PASS") => test.status = TestStatus::Pass,
+                            Some("FAIL") => test.status = TestStatus::Fail(tb_buf.clone().into()),
+                            Some("RUNNING") => (),
+                            _ => todo!(),
+                        }
+                    }
+                }
+                Some(_) => {
+                    tb_buf.push('\n');
+                    tb_buf.push_str(line);
+                }
+                None => {
+                    tb_buf.push('\n');
+                    tb_buf.push_str(line);
                 }
             }
         }

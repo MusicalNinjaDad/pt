@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/workspaces/pt/tests/fixtures/complex/run.py", line 27, in <module>
+    test_fails()
+    ~~~~~~~~~~^^
+  File "/workspaces/pt/tests/fixtures/complex/run.py", line 9, in test_fails
+    assert False
+           ^^^^^
+AssertionError

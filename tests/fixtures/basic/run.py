@@ -11,13 +11,14 @@ def test_passes():
 
 if __name__ == "__main__":
     import traceback
+    import sys
 
     print("UID test_fails RUNNING")
     try:
         test_fails()
     except Exception:
+        traceback.print_exc(file=sys.stdout)
         print("UID test_fails FAIL")
-        traceback.print_exc()
     else:
         print("UID test_fails PASS")
 
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     try:
         test_passes()
     except Exception:
+        traceback.print_exc(file=sys.stdout)
         print("UID test_passes FAIL")
-        traceback.print_exc()
     else:
         print("UID test_passes PASS")
