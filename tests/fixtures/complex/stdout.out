@@ -1,5 +1,4 @@
 UID test_fails RUNNING
-UID test_fails FAIL
 Traceback (most recent call last):
   File "/workspaces/pt/tests/fixtures/complex/run.py", line 27, in <module>
     test_fails()
@@ -8,10 +7,10 @@ Traceback (most recent call last):
     assert False
            ^^^^^
 AssertionError
+UID test_fails FAIL
 UID test_passes RUNNING
 UID test_passes PASS
 UID test_seven_is_six RUNNING
-UID test_seven_is_six FAIL
 Traceback (most recent call last):
   File "/workspaces/pt/tests/fixtures/complex/run.py", line 45, in <module>
     test_seven_is_six()
@@ -20,3 +19,4 @@ Traceback (most recent call last):
     assert s == 6
            ^^^^^^
 AssertionError
+UID test_seven_is_six FAIL
