@@ -105,7 +105,7 @@ impl TestSuite {
         self.src.clone() + "\n\n" + &test_runner
     }
 
-    pub fn update_status(&mut self, id: &str, stdout: &str, stderr: &str) {
+    pub fn update_status(&mut self, id: &str, stdout: &str) {
         let mut tb_buf = String::new();
         for line in stdout.lines() {
             let mut words = line.split_ascii_whitespace();

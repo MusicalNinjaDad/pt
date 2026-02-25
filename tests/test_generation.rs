@@ -12,8 +12,7 @@ fn basic() {
     let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
     assert_eq!(expected_runner, suite.runner(id));
     let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
-    let stderr = fs::read_to_string(fixtures.join("stderr.out")).unwrap();
-    suite.update_status(id, &stdout, &stderr);
+    suite.update_status(id, &stdout);
     assert!(matches!(
         &suite.tests["test_passes"].status,
         pt::TestStatus::Pass
@@ -39,8 +38,7 @@ fn complex() {
     let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
     assert_eq!(expected_runner, suite.runner(id));
     let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
-    let stderr = fs::read_to_string(fixtures.join("stderr.out")).unwrap();
-    suite.update_status(id, &stdout, &stderr);
+    suite.update_status(id, &stdout);
     assert!(matches!(
         &suite.tests["test_passes"].status,
         pt::TestStatus::Pass
