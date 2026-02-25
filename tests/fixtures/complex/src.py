@@ -14,4 +14,5 @@ def test_passes():
 
 
 def test_seven_is_six():
-    assert seven() == 6
+    s = seven()
+    assert s == 6
