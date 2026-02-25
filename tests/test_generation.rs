@@ -18,7 +18,7 @@ fn basic() {
         &suite.tests["test_passes"].status,
         pt::TestStatus::Pass
     ));
-    let expect_tb: Traceback = stderr.as_str().into();
+    let expect_tb: Traceback = fs::read_to_string(fixtures.join("test_fails.tb")).unwrap().as_str().into();
     assert!(
         matches!(&suite.tests["test_fails"].status, pt::TestStatus::Fail(tb) if tb == &expect_tb)
     );
