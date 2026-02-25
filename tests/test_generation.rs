@@ -1,56 +1,94 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use pt::{TestSuite, Traceback};
 
-#[test]
-fn basic() {
-    let id = "UID";
-    let fixtures = PathBuf::from("./tests/fixtures/basic");
-    let src = fs::read_to_string(fixtures.join("src.py")).unwrap();
-    let mut suite = TestSuite::try_from(src.as_str()).unwrap();
-    assert_eq!(2, suite.tests.len());
-    let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
-    assert_eq!(expected_runner, suite.runner(id));
-    let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
-    suite.update_status(id, &stdout);
-    assert!(matches!(
-        &suite.tests["test_passes"].status,
-        pt::TestStatus::Pass
-    ));
-    let expect_tb: Traceback = fs::read_to_string(fixtures.join("test_fails.tb"))
-        .unwrap()
-        .into();
-    let tf_status = &suite.tests["test_fails"].status;
-    assert!(
-        matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
-        "{tf_status:?}"
-    );
+fn load_src(directory: &Path) -> TestSuite {
+    let src = fs::read_to_string(directory.join("src.py")).unwrap();
+    TestSuite::try_from(src.as_str()).unwrap()
 }
 
-#[test]
-fn complex() {
-    let id = "UID";
-    let fixtures = PathBuf::from("./tests/fixtures/complex");
-    let src = fs::read_to_string(fixtures.join("src.py")).unwrap();
-    let mut suite = TestSuite::try_from(src.as_str()).unwrap();
-    assert_eq!(3, suite.tests.len());
-    let expected_runner = fs::read_to_string(fixtures.join("run.py")).unwrap();
-    assert_eq!(expected_runner, suite.runner(id));
-    let stdout = fs::read_to_string(fixtures.join("stdout.out")).unwrap();
-    suite.update_status(id, &stdout);
-    assert!(matches!(
-        &suite.tests["test_passes"].status,
-        pt::TestStatus::Pass
-    ));
-    for failed_test in ["test_fails", "test_seven_is_six"] {
-        let expect_tb: Traceback =
-            fs::read_to_string(fixtures.join(failed_test).with_added_extension("tb"))
-                .unwrap()
-                .into();
-        let tf_status = &suite.tests[failed_test].status;
+mod basic {
+    use std::sync::LazyLock;
+
+    use super::*;
+    static ID: &str = "UID";
+    static FIXTURES: LazyLock<PathBuf> = LazyLock::new(|| PathBuf::from("./tests/fixtures/basic"));
+
+    #[test]
+    fn suite_from_src() {
+        let suite = load_src(&FIXTURES);
+        assert_eq!(2, suite.tests.len());
+    }
+
+    #[test]
+    fn runner() {
+        let suite = load_src(&FIXTURES);
+        let expected_runner = fs::read_to_string(FIXTURES.join("run.py")).unwrap();
+        assert_eq!(expected_runner, suite.runner(ID));
+    }
+
+    #[test]
+    fn parse_status() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        assert!(matches!(
+            &suite.tests["test_passes"].status,
+            pt::TestStatus::Pass
+        ));
+        let expect_tb: Traceback = fs::read_to_string(FIXTURES.join("test_fails.tb"))
+            .unwrap()
+            .into();
+        let tf_status = &suite.tests["test_fails"].status;
         assert!(
             matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
-            "{failed_test}: {tf_status:?}"
+            "{tf_status:?}"
         );
+    }
+}
+
+mod complex {
+    use std::sync::LazyLock;
+
+    use super::*;
+    static ID: &str = "UID";
+    static FIXTURES: LazyLock<PathBuf> = LazyLock::new(|| PathBuf::from("./tests/fixtures/complex"));
+
+    #[test]
+    fn suite_from_src() {
+        let suite = load_src(&FIXTURES);
+        assert_eq!(3, suite.tests.len());
+    }
+
+    #[test]
+    fn runner() {
+        let suite = load_src(&FIXTURES);
+        let expected_runner = fs::read_to_string(FIXTURES.join("run.py")).unwrap();
+        assert_eq!(expected_runner, suite.runner(ID));
+    }
+
+    #[test]
+    fn parse_status() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        assert!(matches!(
+            &suite.tests["test_passes"].status,
+            pt::TestStatus::Pass
+        ));
+        for failed_test in ["test_fails", "test_seven_is_six"] {
+            let expect_tb: Traceback =
+                fs::read_to_string(FIXTURES.join(failed_test).with_added_extension("tb"))
+                    .unwrap()
+                    .into();
+            let tf_status = &suite.tests[failed_test].status;
+            assert!(
+                matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
+                "{failed_test}: {tf_status:?}"
+            );
+        }
     }
 }
