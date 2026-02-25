@@ -74,6 +74,7 @@ impl TestSuite {
         test_runner += indent;
         test_runner += "import traceback";
         test_runner += newline;
+        push_python_line(&mut test_runner, 1, ["import sys"]);
         self.tests.keys().for_each(|testname| {
             test_runner.push_str(newline);
             push_python_line(
@@ -89,7 +90,7 @@ impl TestSuite {
                 2,
                 ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
             );
-            push_python_line(&mut test_runner, 2, ["traceback.print_exc()"]);
+            push_python_line(&mut test_runner, 2, ["traceback.print_exc(file=sys.stdout)"]);
             push_python_line(&mut test_runner, 1, ["else:"]);
             push_python_line(
                 &mut test_runner,
