@@ -19,7 +19,6 @@ fn basic() {
     ));
     let expect_tb: Traceback = fs::read_to_string(fixtures.join("test_fails.tb"))
         .unwrap()
-        .as_str()
         .into();
     let tf_status = &suite.tests["test_fails"].status;
     assert!(
@@ -47,7 +46,6 @@ fn complex() {
         let expect_tb: Traceback =
             fs::read_to_string(fixtures.join(failed_test).with_added_extension("tb"))
                 .unwrap()
-                .as_str()
                 .into();
         let tf_status = &suite.tests[failed_test].status;
         assert!(

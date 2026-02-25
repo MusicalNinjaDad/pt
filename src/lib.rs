@@ -58,11 +58,9 @@ impl TryFrom<&str> for TestSuite {
     }
 }
 
-impl From<&str> for Traceback {
-    fn from(text: &str) -> Self {
-        Self {
-            text: text.to_string(),
-        }
+impl From<String> for Traceback {
+    fn from(text: String) -> Self {
+        Self { text }
     }
 }
 
@@ -119,11 +117,7 @@ impl TestSuite {
                     {
                         match words.next() {
                             Some("PASS") => test.status = TestStatus::Pass,
-                            Some("FAIL") => {
-                                test.status = TestStatus::Fail(Traceback {
-                                    text: tb_buf.clone(),
-                                })
-                            }
+                            Some("FAIL") => test.status = TestStatus::Fail(tb_buf.clone().into()),
                             Some("RUNNING") => (),
                             _ => todo!(),
                         }
