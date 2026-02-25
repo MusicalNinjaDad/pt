@@ -19,14 +19,14 @@ def test_seven_is_six():
 
 
 if __name__ == "__main__":
-    import traceback
+    from traceback import TracebackException
     import sys
 
     print("UID test_fails RUNNING")
     try:
         test_fails()
     except Exception:
-        traceback.print_exc(file=sys.stdout)
+        TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)
         print("UID test_fails FAIL")
     else:
         print("UID test_fails PASS")
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     try:
         test_passes()
     except Exception:
-        traceback.print_exc(file=sys.stdout)
+        TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)
         print("UID test_passes FAIL")
     else:
         print("UID test_passes PASS")
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     try:
         test_seven_is_six()
     except Exception:
-        traceback.print_exc(file=sys.stdout)
+        TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)
         print("UID test_seven_is_six FAIL")
     else:
         print("UID test_seven_is_six PASS")

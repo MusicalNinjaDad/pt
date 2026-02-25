@@ -3,6 +3,20 @@ Traceback (most recent call last):
   File "/workspaces/pt/tests/fixtures/basic/run.py", line 18, in <module>
     test_fails()
     ~~~~~~~~~~^^
+    TracebackException = <class 'traceback.TracebackException'>
+    __annotations__ = {}
+    __builtins__ = <module 'builtins' (built-in)>
+    __cached__ = None
+    __doc__ = None
+    __file__ = '/workspaces/pt/tests/fixtures/basic/run.py'
+    __loader__ = <_frozen_importlib_external.SourceFileLoader object at 0x764360d7a2c0>
+    __name__ = '__main__'
+    __package__ = None
+    __spec__ = None
+    pathlib = <module 'pathlib' from '/usr/lib64/python3.13/pathlib/__init__.py'>
+    sys = <module 'sys' (built-in)>
+    test_fails = <function test_fails at 0x764360c03740>
+    test_passes = <function test_passes at 0x764360c03880>
   File "/workspaces/pt/tests/fixtures/basic/run.py", line 5, in test_fails
     assert False
            ^^^^^

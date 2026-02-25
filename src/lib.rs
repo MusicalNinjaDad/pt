@@ -66,12 +66,13 @@ impl From<String> for Traceback {
 
 impl TestSuite {
     pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
-        let indent = "    ";
         let newline = "\n";
         let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
-        test_runner += indent;
-        test_runner += "import traceback";
-        test_runner += newline;
+        push_python_line(
+            &mut test_runner,
+            1,
+            ["from traceback import TracebackException"],
+        );
         push_python_line(&mut test_runner, 1, ["import sys"]);
         self.tests.keys().for_each(|testname| {
             test_runner.push_str(newline);
@@ -86,7 +87,7 @@ impl TestSuite {
             push_python_line(
                 &mut test_runner,
                 2,
-                ["traceback.print_exc(file=sys.stdout)"],
+                ["TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)"],
             );
             push_python_line(
                 &mut test_runner,
