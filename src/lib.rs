@@ -85,7 +85,11 @@ impl TestSuite {
             push_python_line(&mut test_runner, 1, ["try:"]);
             push_python_line(&mut test_runner, 2, [testname, "()"]);
             push_python_line(&mut test_runner, 1, ["except Exception:"]);
-            push_python_line(&mut test_runner, 2, ["traceback.print_exc(file=sys.stdout)"]);
+            push_python_line(
+                &mut test_runner,
+                2,
+                ["traceback.print_exc(file=sys.stdout)"],
+            );
             push_python_line(
                 &mut test_runner,
                 2,
@@ -102,18 +106,31 @@ impl TestSuite {
     }
 
     pub fn update_status(&mut self, id: &str, stdout: &str, stderr: &str) {
+        let mut tb_buf = String::new();
         for line in stdout.lines() {
             let mut words = line.split_ascii_whitespace();
-            if words.next() == Some(id)
-                && let Some(testname) = words.next()
-                && let Some(test) = self.tests.get_mut(testname)
-            {
-                match words.next() {
-                    Some("PASS") => test.status = TestStatus::Pass,
-                    Some("FAIL") => test.status = TestStatus::Fail(stderr.into()),
-                    Some("RUNNING") => (),
-                    _ => todo!(),
+            match words.next() {
+                Some("Traceback") => {
+                    tb_buf = line.to_string();
                 }
+                Some(id_) if id_ == id => {
+                    if let Some(testname) = words.next()
+                        && let Some(test) = self.tests.get_mut(testname)
+                    {
+                        match words.next() {
+                            Some("PASS") => test.status = TestStatus::Pass,
+                            Some("FAIL") => {
+                                test.status = TestStatus::Fail(Traceback {
+                                    text: tb_buf.clone(),
+                                })
+                            }
+                            Some("RUNNING") => (),
+                            _ => todo!(),
+                        }
+                    }
+                }
+                Some(_) => tb_buf.push_str(line),
+                None => tb_buf.push_str(line),
             }
         }
     }
