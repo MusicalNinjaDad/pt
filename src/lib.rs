@@ -129,8 +129,14 @@ impl TestSuite {
                         }
                     }
                 }
-                Some(_) => tb_buf.push_str(line),
-                None => tb_buf.push_str(line),
+                Some(_) => {
+                    tb_buf.push('\n');
+                    tb_buf.push_str(line);
+                }
+                None => {
+                    tb_buf.push('\n');
+                    tb_buf.push_str(line);
+                }
             }
         }
     }
