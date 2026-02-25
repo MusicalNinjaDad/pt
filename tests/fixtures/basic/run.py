@@ -17,8 +17,8 @@ if __name__ == "__main__":
     try:
         test_fails()
     except Exception:
-        print("UID test_fails FAIL")
         traceback.print_exc(file=sys.stdout)
+        print("UID test_fails FAIL")
     else:
         print("UID test_fails PASS")
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     try:
         test_passes()
     except Exception:
-        print("UID test_passes FAIL")
         traceback.print_exc(file=sys.stdout)
+        print("UID test_passes FAIL")
     else:
         print("UID test_passes PASS")

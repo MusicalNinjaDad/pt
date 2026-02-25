@@ -85,12 +85,12 @@ impl TestSuite {
             push_python_line(&mut test_runner, 1, ["try:"]);
             push_python_line(&mut test_runner, 2, [testname, "()"]);
             push_python_line(&mut test_runner, 1, ["except Exception:"]);
+            push_python_line(&mut test_runner, 2, ["traceback.print_exc(file=sys.stdout)"]);
             push_python_line(
                 &mut test_runner,
                 2,
                 ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
             );
-            push_python_line(&mut test_runner, 2, ["traceback.print_exc(file=sys.stdout)"]);
             push_python_line(&mut test_runner, 1, ["else:"]);
             push_python_line(
                 &mut test_runner,
