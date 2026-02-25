@@ -23,7 +23,7 @@ fn basic() {
     let tf_status = &suite.tests["test_fails"].status;
     assert!(
         matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
-        "{failed_test}: {tf_status:?}"
+        "{tf_status:?}"
     );
 }
 
@@ -50,7 +50,7 @@ fn complex() {
         let tf_status = &suite.tests[failed_test].status;
         assert!(
             matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
-            "{tf_status:?}"
+            "{failed_test}: {tf_status:?}"
         );
     }
 }
