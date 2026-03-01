@@ -166,18 +166,21 @@ impl Pytest {
         }
 
         #[derive(Debug)]
-        enum TbLine {
+        enum TbLine<'line> {
             TracebackHeader,
-            FrameHeader,
+            FrameHeader(&'line str),
             FrameContents,
             Exception,
         }
 
-        impl From<&str> for TbLine {
-            fn from(line: &str) -> Self {
+        impl<'line> From<&'line str> for TbLine<'line> {
+            fn from(line: &'line str) -> Self {
                 match line.split_whitespace().next() {
                     Some("Traceback") => Self::TracebackHeader,
-                    Some("File") => Self::FrameHeader,
+                    Some("File") => {
+                        let function_name = line.split_whitespace().last().unwrap();
+                        Self::FrameHeader(function_name)
+                    }
                     _ => {
                         if line.starts_with("    ") {
                             Self::FrameContents
@@ -198,8 +201,10 @@ impl Pytest {
                     for line in lines {
                         match TbLine::from(line) {
                             TbLine::TracebackHeader => (),
-                            TbLine::FrameHeader => {
-                                frame_buf = line.to_string();
+                            TbLine::FrameHeader(function_name) => {
+                                frame_buf = String::from("==== ");
+                                frame_buf.push_str(function_name);
+                                frame_buf.push_str(" ====");
                                 parse_status = TbParseStatus::InFrame;
                             }
                             TbLine::FrameContents
@@ -208,9 +213,7 @@ impl Pytest {
                                 frame_buf.push('\n');
                                 frame_buf.push_str(line);
                             }
-                            TbLine::Exception
-                                if matches!(parse_status, TbParseStatus::InFrame) =>
-                            {
+                            TbLine::Exception if matches!(parse_status, TbParseStatus::InFrame) => {
                                 frame_buf.push('\n');
                                 frame_buf.push_str(line);
                             }
