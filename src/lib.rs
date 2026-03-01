@@ -19,11 +19,17 @@ pub enum TestStatus {
     #[default]
     NoRun,
     Pass,
-    Fail(Traceback),
+    Fail(PyError, Traceback),
 }
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
     text: String,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PyError {
+    AssertionError,
+    Other,
 }
 
 impl From<StmtFunctionDef> for Pytest {
@@ -61,6 +67,16 @@ impl TryFrom<&str> for TestSuite {
 impl From<String> for Traceback {
     fn from(text: String) -> Self {
         Self { text }
+    }
+}
+
+impl From<&str> for PyError {
+    fn from(traceback: &str) -> Self {
+        let lastline = traceback.lines().last().unwrap();
+        match lastline {
+            "AssertionError" => Self::AssertionError,
+            _ => Self::Other,
+        }
     }
 }
 
@@ -118,7 +134,10 @@ impl TestSuite {
                     {
                         match words.next() {
                             Some("PASS") => test.status = TestStatus::Pass,
-                            Some("FAIL") => test.status = TestStatus::Fail(tb_buf.clone().into()),
+                            Some("FAIL") => {
+                                test.status =
+                                    TestStatus::Fail(tb_buf.as_str().into(), tb_buf.clone().into())
+                            }
                             Some("RUNNING") => (),
                             _ => todo!(),
                         }

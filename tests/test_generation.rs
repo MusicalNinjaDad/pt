@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use pt::{TestSuite, Traceback};
+use pt::{PyError, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
     let src = fs::read_to_string(directory.join("src.py")).unwrap();
@@ -37,14 +37,17 @@ mod basic {
         suite.update_status(ID, &stdout);
         assert!(matches!(
             &suite.tests["test_passes"].status,
-            pt::TestStatus::Pass
+            TestStatus::Pass
         ));
         let expect_tb: Traceback = fs::read_to_string(FIXTURES.join("test_fails.tb"))
             .unwrap()
             .into();
         let tf_status = &suite.tests["test_fails"].status;
         assert!(
-            matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
+            matches!(tf_status, TestStatus::Fail(err, tb)
+                if matches!(err, PyError::AssertionError)
+                && tb == &expect_tb
+            ),
             "{tf_status:?}"
         );
     }
@@ -78,7 +81,7 @@ mod complex {
         suite.update_status(ID, &stdout);
         assert!(matches!(
             &suite.tests["test_passes"].status,
-            pt::TestStatus::Pass
+            TestStatus::Pass
         ));
         for failed_test in ["test_fails", "test_seven_is_six"] {
             let expect_tb: Traceback =
@@ -87,7 +90,10 @@ mod complex {
                     .into();
             let tf_status = &suite.tests[failed_test].status;
             assert!(
-                matches!(tf_status, pt::TestStatus::Fail(tb) if tb == &expect_tb),
+                matches!(tf_status, TestStatus::Fail(err, tb)
+                    if matches!(err, PyError::AssertionError)
+                    && tb == &expect_tb
+                ),
                 "{failed_test}: {tf_status:?}"
             );
         }
