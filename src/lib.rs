@@ -3,6 +3,7 @@
 use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
@@ -234,9 +235,23 @@ impl TestSuite {
                                 frame_buf.push_str(frameheader.function_name);
                                 frame_buf.push_str(" ====");
                                 frame_buf.push('\n');
+                                let starting_line = self.line_no(testname);
+                                let line_no = usize::from_str(frameheader.line_number).unwrap();
+                                let indent = frameheader.line_number.len() + 1;
+                                let (_, src) = self
+                                    .src
+                                    .split_at(self.tests[testname].code.range.start().into());
+                                for line in
+                                    src.lines().take(line_no - starting_line)
+                                {
+                                    for _ in 0..indent {
+                                        frame_buf.push(' ');
+                                    }
+                                    frame_buf.push_str(line);
+                                    frame_buf.push('\n');
+                                }
                                 frame_buf.push_str(frameheader.line_number);
                                 frame_buf.push(':');
-                                let indent = frameheader.line_number.len() + 1;
                                 parse_status = TbParseStatus::InFrame {
                                     indent,
                                     first_line: true,
