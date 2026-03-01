@@ -1,4 +1,4 @@
 ==== test_fails ====
-    assert False
-           ^^^^^
+5:    assert False
+             ^^^^^
 AssertionError

@@ -1,5 +1,5 @@
 ==== test_seven_is_six ====
-    assert s == 6
-           ^^^^^^
-    s = 7
+18:    assert s == 6
+              ^^^^^^
+       s = 7
 AssertionError
