@@ -1,0 +1,5 @@
+  File "/workspaces/pt/tests/fixtures/complex/run.py", line 18, in test_seven_is_six
+    assert s == 6
+           ^^^^^^
+    s = 7
+AssertionError

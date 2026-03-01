@@ -117,4 +117,14 @@ mod complex {
             );
         }
     }
+
+    #[test]
+    fn assertion_rewrite_test_seven_is_six() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.tests["test_seven_is_six"].failure_report().unwrap();
+        let expect_rpt = fs::read_to_string(FIXTURES.join("test_seven_is_six.rpt")).unwrap();
+        assert_eq!(expect_rpt, report);
+    }
 }
