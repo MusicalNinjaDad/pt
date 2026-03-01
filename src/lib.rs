@@ -156,6 +156,15 @@ impl TestSuite {
     }
 }
 
+impl Pytest {
+    pub fn failure_report(&self) -> Option<String> {
+        match self.status {
+            TestStatus::Fail(_, _) => Some("failed".to_string()),
+            _ => None,
+        }
+    }
+}
+
 fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
 where
     StrIter: IntoIterator<Item = &'strs str>,

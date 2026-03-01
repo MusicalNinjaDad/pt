@@ -51,6 +51,24 @@ mod basic {
             "{tf_status:?}"
         );
     }
+
+    #[test]
+    fn assertion_rewrite_test_passes() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.tests["test_passes"].failure_report();
+        assert!(report.is_none());
+    }
+
+    #[test]
+    fn assertion_rewrite_test_fails() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.tests["test_fails"].failure_report().unwrap();
+        assert_eq!("failed", report);
+    }
 }
 
 mod complex {
