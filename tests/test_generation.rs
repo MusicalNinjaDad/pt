@@ -55,7 +55,8 @@ mod complex {
 
     use super::*;
     static ID: &str = "UID";
-    static FIXTURES: LazyLock<PathBuf> = LazyLock::new(|| PathBuf::from("./tests/fixtures/complex"));
+    static FIXTURES: LazyLock<PathBuf> =
+        LazyLock::new(|| PathBuf::from("./tests/fixtures/complex"));
 
     #[test]
     fn suite_from_src() {
