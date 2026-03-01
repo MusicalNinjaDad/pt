@@ -1,4 +1,6 @@
 ==== test_seven_is_six ====
+   def test_seven_is_six():
+       s = seven()
 18:    assert s == 6
               ^^^^^^
        s = 7
