@@ -166,9 +166,9 @@ impl TestSuite {
 impl Pytest {
     pub fn failure_report(&self) -> Option<String> {
         #[derive(Debug, Default)]
-        enum TbParseStatus <'line>{
+        enum TbParseStatus {
             InFrame {
-                frameheader: FrameHeader<'line>,
+                indent: usize,
                 first_line: bool,
             },
             #[default]
@@ -236,16 +236,16 @@ impl Pytest {
                                 frame_buf.push('\n');
                                 frame_buf.push_str(frameheader.line_number);
                                 frame_buf.push(':');
+                                let indent = frameheader.line_number.len() + 1;
                                 parse_status = TbParseStatus::InFrame {
-                                    frameheader,
+                                    indent,
                                     first_line: true,
                                 };
                             }
                             TbLine::FrameContents
-                                if let TbParseStatus::InFrame { frameheader, first_line } =
+                                if let TbParseStatus::InFrame { indent, first_line } =
                                     parse_status =>
                             {
-                                let indent = frameheader.line_number.len() + 1;
                                 if !first_line {
                                     for _ in 0..indent {
                                         frame_buf.push(' ');
@@ -254,7 +254,7 @@ impl Pytest {
                                 frame_buf.push_str(line);
                                 frame_buf.push('\n');
                                 parse_status = TbParseStatus::InFrame {
-                                    frameheader,
+                                    indent,
                                     first_line: false,
                                 };
                             }
@@ -262,7 +262,7 @@ impl Pytest {
                                 if matches!(
                                     parse_status,
                                     TbParseStatus::InFrame {
-                                        frameheader: _,
+                                        indent: _,
                                         first_line: _
                                     }
                                 ) =>
