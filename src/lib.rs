@@ -241,9 +241,7 @@ impl TestSuite {
                                 let (_, src) = self
                                     .src
                                     .split_at(self.tests[testname].code.range.start().into());
-                                for line in
-                                    src.lines().take(line_no - starting_line)
-                                {
+                                for line in src.lines().take(line_no - starting_line) {
                                     for _ in 0..indent {
                                         frame_buf.push(' ');
                                     }
