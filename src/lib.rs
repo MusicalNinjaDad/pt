@@ -158,9 +158,30 @@ impl TestSuite {
 
 impl Pytest {
     pub fn failure_report(&self) -> Option<String> {
+        #[derive(Debug, Default)]
+        enum TbParseStatus {
+            InFrame,
+            #[default]
+            NotInFrame,
+        }
+
         match &self.status {
-            TestStatus::Fail(err, _) => match err {
-                PyError::AssertionError => Some("failed".to_string()),
+            TestStatus::Fail(err, tb) => match err {
+                PyError::AssertionError => {
+                    let mut frame_buf = String::new();
+                    let mut parse_status: TbParseStatus = Default::default();
+                    let lines = tb.text.lines();
+                    for line in lines {
+                        if line.starts_with("  File") {
+                            frame_buf = line.to_string();
+                            parse_status = TbParseStatus::InFrame;
+                        } else if let TbParseStatus::InFrame = parse_status {
+                            frame_buf.push('\n');
+                            frame_buf.push_str(line)
+                        }
+                    }
+                    Some(frame_buf)
+                }
                 _ => todo!(),
             },
             _ => None,

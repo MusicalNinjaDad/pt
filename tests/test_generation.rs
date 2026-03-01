@@ -67,7 +67,8 @@ mod basic {
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
         let report = suite.tests["test_fails"].failure_report().unwrap();
-        assert_eq!("failed", report);
+        let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
+        assert_eq!(expect_rpt, report);
     }
 }
 
