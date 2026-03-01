@@ -237,7 +237,7 @@ impl TestSuite {
                                 frame_buf.push('\n');
                                 let starting_line = self.line_no(testname);
                                 let line_no = usize::from_str(frameheader.line_number).unwrap();
-                                let indent = frameheader.line_number.len() + 1;
+                                let indent = frameheader.line_number.len() + 2;
                                 let (_, src) = self
                                     .src
                                     .split_at(self.tests[testname].code.range.start().into());
@@ -249,7 +249,7 @@ impl TestSuite {
                                     frame_buf.push('\n');
                                 }
                                 frame_buf.push_str(frameheader.line_number);
-                                frame_buf.push(':');
+                                frame_buf.push_str(": ");
                                 parse_status = TbParseStatus::InFrame {
                                     indent,
                                     first_line: true,
