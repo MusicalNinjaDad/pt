@@ -156,6 +156,11 @@ impl TestSuite {
             }
         }
     }
+
+    fn line_no(&self, testname: &str) -> usize {
+        let start: usize = self.tests[testname].code.range.start().into();
+        self.src[0..start].lines().count() + 1
+    }
 }
 
 impl Pytest {
@@ -322,5 +327,6 @@ def test_passes():
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));
+        assert_eq!(4, pytests.line_no("test_fails"));
     }
 }
