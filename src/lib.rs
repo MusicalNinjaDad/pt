@@ -158,8 +158,11 @@ impl TestSuite {
 
 impl Pytest {
     pub fn failure_report(&self) -> Option<String> {
-        match self.status {
-            TestStatus::Fail(_, _) => Some("failed".to_string()),
+        match &self.status {
+            TestStatus::Fail(err, _) => match err {
+                PyError::AssertionError => Some("failed".to_string()),
+                _ => todo!(),
+            },
             _ => None,
         }
     }
