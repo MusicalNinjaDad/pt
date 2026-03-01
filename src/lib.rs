@@ -163,8 +163,8 @@ impl TestSuite {
     }
 }
 
-impl Pytest {
-    pub fn failure_report(&self) -> Option<String> {
+impl TestSuite {
+    pub fn failure_report(&self, testname: &str) -> Option<String> {
         #[derive(Debug, Default)]
         enum TbParseStatus {
             InFrame {
@@ -220,7 +220,7 @@ impl Pytest {
             }
         }
 
-        match &self.status {
+        match &self.tests[testname].status {
             TestStatus::Fail(err, tb) => match err {
                 PyError::AssertionError => {
                     let mut frame_buf = String::new();
