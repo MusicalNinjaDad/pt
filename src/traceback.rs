@@ -35,6 +35,22 @@ pub (crate) enum TbLine<'line> {
     Exception(PyError),
 }
 
+impl<'line> From<&'line str> for TbLine<'line> {
+    fn from(line: &'line str) -> Self {
+        match line.split_whitespace().next() {
+            Some("Traceback") => Self::TracebackHeader,
+            Some("File") => Self::FrameHeader(line.into()),
+            _ => {
+                if line.starts_with("    ") {
+                    Self::FrameContents{text: line}
+                } else {
+                    Self::Exception(PyError::from(line))
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct FrameHeader<'line> {
     file_name: &'line str,
@@ -52,22 +68,6 @@ impl<'line> From<&'line str> for FrameHeader<'line> {
             file_name,
             function_name,
             line_number,
-        }
-    }
-}
-
-impl<'line> From<&'line str> for TbLine<'line> {
-    fn from(line: &'line str) -> Self {
-        match line.split_whitespace().next() {
-            Some("Traceback") => Self::TracebackHeader,
-            Some("File") => Self::FrameHeader(line.into()),
-            _ => {
-                if line.starts_with("    ") {
-                    Self::FrameContents{text: line}
-                } else {
-                    Self::Exception(PyError::from(line))
-                }
-            }
         }
     }
 }
