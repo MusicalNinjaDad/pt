@@ -5,6 +5,9 @@ use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
 use std::str::FromStr;
 
+mod traceback;
+pub use traceback::Traceback;
+
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
     src: String,
@@ -23,10 +26,6 @@ pub enum TestStatus {
     NoRun,
     Pass,
     Fail(PyError, Traceback),
-}
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Traceback {
-    text: String,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -64,12 +63,6 @@ impl TryFrom<&str> for TestSuite {
             src: src.to_string(),
             tests,
         })
-    }
-}
-
-impl From<String> for Traceback {
-    fn from(text: String) -> Self {
-        Self { text }
     }
 }
 
