@@ -2,7 +2,7 @@ use crate::PyError;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
-   pub (crate) text: String,
+   text: String,
 }
 
 impl From<String> for Traceback {
