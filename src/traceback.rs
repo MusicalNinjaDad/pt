@@ -2,7 +2,7 @@ use crate::PyError;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
-   text: String,
+    text: String,
 }
 
 impl From<String> for Traceback {
@@ -12,13 +12,13 @@ impl From<String> for Traceback {
 }
 
 impl Traceback {
-    pub (crate) fn lines(&'_ self) -> impl Iterator<Item = TbLine<'_>> {
+    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TbLine<'_>> {
         self.text.lines().map(TbLine::from)
     }
 }
 
 #[derive(Debug, Default)]
-pub (crate) enum TbParseStatus {
+pub(crate) enum TbParseStatus {
     InFrame {
         indent: usize,
         first_line: bool,
@@ -28,10 +28,10 @@ pub (crate) enum TbParseStatus {
 }
 
 #[derive(Debug)]
-pub (crate) enum TbLine<'line> {
+pub(crate) enum TbLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
-    FrameContents{text: &'line str},
+    FrameContents { text: &'line str },
     Exception(PyError),
 }
 
@@ -42,7 +42,7 @@ impl<'line> From<&'line str> for TbLine<'line> {
             Some("File") => Self::FrameHeader(line.into()),
             _ => {
                 if line.starts_with("    ") {
-                    Self::FrameContents{text: line}
+                    Self::FrameContents { text: line }
                 } else {
                     Self::Exception(PyError::from(line))
                 }

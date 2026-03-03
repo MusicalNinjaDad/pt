@@ -204,7 +204,7 @@ impl TestSuite {
                                     first_line: true,
                                 };
                             }
-                            TbLine::FrameContents{text}
+                            TbLine::FrameContents { text }
                                 if let TbParseStatus::InFrame { indent, first_line } =
                                     parse_status =>
                             {
