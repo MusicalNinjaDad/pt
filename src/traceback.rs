@@ -12,7 +12,7 @@ impl From<String> for Traceback {
 }
 
 impl Traceback {
-    pub (crate) fn lines(&self) -> impl Iterator<Item = TbLine> {
+    pub (crate) fn lines(&'_ self) -> impl Iterator<Item = TbLine<'_>> {
         self.text.lines().map(|line| TbLine::from(line))
     }
 }
