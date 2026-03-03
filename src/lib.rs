@@ -8,6 +8,8 @@ use std::str::FromStr;
 mod traceback;
 pub use traceback::Traceback;
 
+use crate::traceback::{TbLine, TbParseStatus};
+
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
     src: String,
@@ -156,63 +158,6 @@ impl TestSuite {
         self.src[0..start].lines().count() + 1
     }
 }
-
-#[derive(Debug, Default)]
-enum TbParseStatus {
-    InFrame {
-        indent: usize,
-        first_line: bool,
-    },
-    #[default]
-    NotInFrame,
-}
-
-#[derive(Debug)]
-enum TbLine<'line> {
-    TracebackHeader,
-    FrameHeader(FrameHeader<'line>),
-    FrameContents,
-    Exception,
-}
-
-#[derive(Debug)]
-struct FrameHeader<'line> {
-    file_name: &'line str,
-    function_name: &'line str,
-    line_number: &'line str,
-}
-
-impl<'line> From<&'line str> for FrameHeader<'line> {
-    fn from(line: &'line str) -> Self {
-        let mut words = line.split_whitespace();
-        let file_name = words.nth(1).unwrap();
-        let line_number = words.nth(1).unwrap().trim_end_matches(",");
-        let function_name = words.nth(1).unwrap();
-        Self {
-            file_name,
-            function_name,
-            line_number,
-        }
-    }
-}
-
-impl<'line> From<&'line str> for TbLine<'line> {
-    fn from(line: &'line str) -> Self {
-        match line.split_whitespace().next() {
-            Some("Traceback") => Self::TracebackHeader,
-            Some("File") => Self::FrameHeader(line.into()),
-            _ => {
-                if line.starts_with("    ") {
-                    Self::FrameContents
-                } else {
-                    Self::Exception
-                }
-            }
-        }
-    }
-}
-
-
 
 impl TestSuite {
     pub fn failure_report(&self, testname: &str) -> Option<String> {
