@@ -212,6 +212,8 @@ impl<'line> From<&'line str> for TbLine<'line> {
     }
 }
 
+
+
 impl TestSuite {
     pub fn failure_report(&self, testname: &str) -> Option<String> {
         match &self.tests[testname].status {
@@ -219,7 +221,7 @@ impl TestSuite {
                 PyError::AssertionError => {
                     let mut frame_buf = String::new();
                     let mut parse_status: TbParseStatus = Default::default();
-                    let lines = tb.text.lines();
+                    let lines = tb.lines();
                     for line in lines {
                         match TbLine::from(line) {
                             TbLine::TracebackHeader => (),
