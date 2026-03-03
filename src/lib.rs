@@ -168,6 +168,22 @@ impl TestSuite {
     }
 }
 
+trait StringBuffer {
+    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
+}
+
+impl StringBuffer for String {
+    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>) {
+        for _ in 0..indent {
+            self.push(' ');
+        }
+        for text in contents {
+            self.push_str(text);
+        }
+        self.push('\n');
+    }
+}
+
 impl TestSuite {
     pub fn failure_report(&self, testname: &str) -> Option<String> {
         enum Prefix<'str> {
@@ -184,10 +200,9 @@ impl TestSuite {
                         match line {
                             TbLine::TracebackHeader => (),
                             TbLine::FrameHeader(frameheader) => {
-                                frame_buf = String::from("==== ");
-                                frame_buf.push_str(frameheader.function_name);
-                                frame_buf.push_str(" ====");
-                                frame_buf.push('\n');
+                                frame_buf.clear();
+                                frame_buf
+                                    .push_line(0, ["==== ", frameheader.function_name, " ===="]);
                                 let starting_line = self.line_no(testname);
                                 let failed_assert_line_no =
                                     usize::from_str(frameheader.line_number).unwrap();
@@ -198,11 +213,7 @@ impl TestSuite {
                                     .lines()
                                     .take(failed_assert_line_no - starting_line);
                                 for line in start_of_function {
-                                    for _ in 0..indent {
-                                        frame_buf.push(' ');
-                                    }
-                                    frame_buf.push_str(line);
-                                    frame_buf.push('\n');
+                                    frame_buf.push_line(indent, [line]);
                                 }
                                 prefix = Prefix::LineNumber(frameheader.line_number);
                             }
