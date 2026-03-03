@@ -180,8 +180,7 @@ impl TestSuite {
                 PyError::AssertionError => {
                     let mut frame_buf = String::new();
                     let mut prefix = Prefix::Indent(0);
-                    let lines = tb.lines();
-                    for line in lines {
+                    for line in tb.lines() {
                         match line {
                             TbLine::TracebackHeader => (),
                             TbLine::FrameHeader(frameheader) => {
@@ -190,12 +189,14 @@ impl TestSuite {
                                 frame_buf.push_str(" ====");
                                 frame_buf.push('\n');
                                 let starting_line = self.line_no(testname);
-                                let line_no = usize::from_str(frameheader.line_number).unwrap();
+                                let failed_assert_line_no = usize::from_str(frameheader.line_number).unwrap();
                                 let indent = frameheader.line_number.len() + 2;
-                                let (_, src) = self
+                                let (_, testfunction_src) = self
                                     .src
                                     .split_at(self.tests[testname].code.range.start().into());
-                                for line in src.lines().take(line_no - starting_line) {
+                                let start_of_function =
+                                    testfunction_src.lines().take(failed_assert_line_no - starting_line);
+                                for line in start_of_function {
                                     for _ in 0..indent {
                                         frame_buf.push(' ');
                                     }
