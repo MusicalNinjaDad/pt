@@ -3,7 +3,7 @@
 use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 mod traceback;
 pub use traceback::Traceback;
@@ -34,6 +34,15 @@ pub enum TestStatus {
 pub enum PyError {
     AssertionError,
     Other,
+}
+
+impl Display for PyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AssertionError => write!(f, "AssertionError"),
+            Self::Other => todo!(),
+        }
+    }
 }
 
 impl From<StmtFunctionDef> for Pytest {
@@ -168,7 +177,7 @@ impl TestSuite {
                     let mut parse_status: TbParseStatus = Default::default();
                     let lines = tb.lines();
                     for line in lines {
-                        match TbLine::from(line) {
+                        match line {
                             TbLine::TracebackHeader => (),
                             TbLine::FrameHeader(frameheader) => {
                                 frame_buf = String::from("==== ");
@@ -195,7 +204,7 @@ impl TestSuite {
                                     first_line: true,
                                 };
                             }
-                            TbLine::FrameContents
+                            TbLine::FrameContents{text}
                                 if let TbParseStatus::InFrame { indent, first_line } =
                                     parse_status =>
                             {
@@ -204,14 +213,14 @@ impl TestSuite {
                                         frame_buf.push(' ');
                                     }
                                 }
-                                frame_buf.push_str(line);
+                                frame_buf.push_str(text);
                                 frame_buf.push('\n');
                                 parse_status = TbParseStatus::InFrame {
                                     indent,
                                     first_line: false,
                                 };
                             }
-                            TbLine::Exception
+                            TbLine::Exception(err)
                                 if matches!(
                                     parse_status,
                                     TbParseStatus::InFrame {
@@ -220,7 +229,7 @@ impl TestSuite {
                                     }
                                 ) =>
                             {
-                                frame_buf.push_str(line);
+                                frame_buf.push_str(&err.to_string());
                                 frame_buf.push('\n');
                             }
                             _ => unreachable!(),

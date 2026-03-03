@@ -1,4 +1,4 @@
-use std::str::Lines;
+use crate::PyError;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
@@ -12,8 +12,8 @@ impl From<String> for Traceback {
 }
 
 impl Traceback {
-    pub (crate) fn lines(&self) -> Lines {
-        self.text.lines()
+    pub (crate) fn lines(&self) -> impl Iterator<Item = TbLine> {
+        self.text.lines().map(|line| TbLine::from(line))
     }
 }
 
@@ -31,8 +31,8 @@ pub (crate) enum TbParseStatus {
 pub (crate) enum TbLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
-    FrameContents,
-    Exception,
+    FrameContents{text: &'line str},
+    Exception(PyError),
 }
 
 #[derive(Debug)]
@@ -63,9 +63,9 @@ impl<'line> From<&'line str> for TbLine<'line> {
             Some("File") => Self::FrameHeader(line.into()),
             _ => {
                 if line.starts_with("    ") {
-                    Self::FrameContents
+                    Self::FrameContents{text: line}
                 } else {
-                    Self::Exception
+                    Self::Exception(PyError::from(line))
                 }
             }
         }
