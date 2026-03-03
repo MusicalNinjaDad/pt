@@ -8,7 +8,7 @@ use std::{fmt::Display, str::FromStr};
 mod traceback;
 pub use traceback::Traceback;
 
-use crate::traceback::{TbLine, TbParseStatus};
+use crate::traceback::TbLine;
 
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
@@ -170,11 +170,16 @@ impl TestSuite {
 
 impl TestSuite {
     pub fn failure_report(&self, testname: &str) -> Option<String> {
+        enum Prefix<'str> {
+            LineNumber(&'str str),
+            Indent(usize),
+        }
+
         match &self.tests[testname].status {
             TestStatus::Fail(err, tb) => match err {
                 PyError::AssertionError => {
                     let mut frame_buf = String::new();
-                    let mut parse_status: TbParseStatus = Default::default();
+                    let mut prefix = Prefix::Indent(0);
                     let lines = tb.lines();
                     for line in lines {
                         match line {
@@ -197,42 +202,28 @@ impl TestSuite {
                                     frame_buf.push_str(line);
                                     frame_buf.push('\n');
                                 }
-                                frame_buf.push_str(frameheader.line_number);
-                                frame_buf.push_str(": ");
-                                parse_status = TbParseStatus::InFrame {
-                                    indent,
-                                    first_line: true,
-                                };
+                                prefix = Prefix::LineNumber(frameheader.line_number);
                             }
-                            TbLine::FrameContents { text }
-                                if let TbParseStatus::InFrame { indent, first_line } =
-                                    parse_status =>
-                            {
-                                if !first_line {
-                                    for _ in 0..indent {
-                                        frame_buf.push(' ');
+                            TbLine::FrameContents { text } => {
+                                match prefix {
+                                    Prefix::LineNumber(lineno) => {
+                                        frame_buf.push_str(lineno);
+                                        frame_buf.push_str(": ");
+                                        prefix = Prefix::Indent(lineno.len() + 2);
+                                    }
+                                    Prefix::Indent(indent) => {
+                                        for _ in 0..indent {
+                                            frame_buf.push(' ');
+                                        }
                                     }
                                 }
                                 frame_buf.push_str(text);
                                 frame_buf.push('\n');
-                                parse_status = TbParseStatus::InFrame {
-                                    indent,
-                                    first_line: false,
-                                };
                             }
-                            TbLine::Exception(err)
-                                if matches!(
-                                    parse_status,
-                                    TbParseStatus::InFrame {
-                                        indent: _,
-                                        first_line: _
-                                    }
-                                ) =>
-                            {
+                            TbLine::Exception(err) => {
                                 frame_buf.push_str(&err.to_string());
                                 frame_buf.push('\n');
                             }
-                            _ => unreachable!(),
                         }
                     }
                     Some(frame_buf)
