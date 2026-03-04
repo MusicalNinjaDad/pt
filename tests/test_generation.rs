@@ -15,7 +15,7 @@ fn load_src(directory: &Path) -> TestSuite {
 mod basic {
     use std::sync::LazyLock;
 
-    use predicates::{ord::eq, str::contains};
+    use predicates::ord::eq;
 
     use super::*;
     static ID: &str = "UID";
