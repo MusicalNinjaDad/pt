@@ -236,22 +236,16 @@ impl TestSuite {
                             TbLine::FrameContents { text } => {
                                 match prefix {
                                     Prefix::LineNumber(lineno) => {
-                                        frame_buf.push_str(lineno);
-                                        frame_buf.push_str(": ");
+                                        frame_buf.push_line(0, [lineno,": ", text]);
                                         prefix = Prefix::Indent(lineno.len() + 2);
                                     }
                                     Prefix::Indent(indent) => {
-                                        for _ in 0..indent {
-                                            frame_buf.push(' ');
-                                        }
+                                        frame_buf.push_line(indent, [text]);
                                     }
                                 }
-                                frame_buf.push_str(text);
-                                frame_buf.push('\n');
                             }
                             TbLine::Exception(err) => {
-                                frame_buf.push_str(&err.to_string());
-                                frame_buf.push('\n');
+                                frame_buf.push_line(0,[err.to_string().as_str()]);
                             }
                         }
                     }
