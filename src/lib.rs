@@ -161,11 +161,6 @@ impl TestSuite {
             }
         }
     }
-
-    fn line_no(&self, testname: &str) -> usize {
-        let start: usize = self.tests[testname].code.range.start().into();
-        self.src[0..start].lines().count() + 1
-    }
 }
 
 trait StringBuffer {
@@ -181,6 +176,29 @@ impl StringBuffer for String {
             self.push_str(text);
         }
         self.push('\n');
+    }
+}
+
+enum Location {
+    Position(usize),
+    Line(usize),
+}
+
+impl TestSuite {
+    /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
+    fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
+        let start_line = match start {
+            Location::Position(pos) => self.src[0..*pos].lines().count(),
+            Location::Line(_) => todo!(),
+        };
+        let end_line = match end {
+            Location::Position(_) => todo!(),
+            Location::Line(line) => *line - 1,
+        };
+        self.src
+            .lines()
+            .skip(start_line)
+            .take(end_line - start_line)
     }
 }
 
@@ -203,16 +221,14 @@ impl TestSuite {
                                 frame_buf.clear();
                                 frame_buf
                                     .push_line(0, ["==== ", frameheader.function_name, " ===="]);
-                                let starting_line = self.line_no(testname);
-                                let failed_assert_line_no =
-                                    usize::from_str(frameheader.line_number).unwrap();
+                                let failure = Location::Line(
+                                    usize::from_str(frameheader.line_number).unwrap(),
+                                );
+                                let testfn_def = Location::Position(
+                                    self.tests[testname].code.range.start().into(),
+                                );
                                 let indent = frameheader.line_number.len() + 2;
-                                let starting_pos = self.tests[testname].code.range.start().into();
-                                let testfunction_src = &self.src[starting_pos..];
-                                let start_of_function = testfunction_src
-                                    .lines()
-                                    .take(failed_assert_line_no - starting_line);
-                                for line in start_of_function {
+                                for line in self.source(&testfn_def, &failure) {
                                     frame_buf.push_line(indent, [line]);
                                 }
                                 prefix = Prefix::LineNumber(frameheader.line_number);
@@ -293,6 +309,5 @@ def test_passes():
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));
-        assert_eq!(4, pytests.line_no("test_fails"));
     }
 }
