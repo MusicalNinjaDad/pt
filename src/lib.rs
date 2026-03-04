@@ -218,9 +218,6 @@ impl TestSuite {
                         match line {
                             TbLine::TracebackHeader => (),
                             TbLine::FrameHeader(frameheader) => {
-                                frame_buf.clear();
-                                frame_buf
-                                    .push_line(0, ["==== ", frameheader.function_name, " ===="]);
                                 let failure = Location::Line(
                                     usize::from_str(frameheader.line_number).unwrap(),
                                 );
@@ -228,6 +225,9 @@ impl TestSuite {
                                     self.tests[testname].code.range.start().into(),
                                 );
                                 let indent = frameheader.line_number.len() + 2;
+                                frame_buf.clear();
+                                frame_buf
+                                    .push_line(0, ["==== ", frameheader.function_name, " ===="]);
                                 for line in self.source(&testfn_def, &failure) {
                                     frame_buf.push_line(indent, [line]);
                                 }
