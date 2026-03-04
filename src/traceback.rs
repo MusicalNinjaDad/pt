@@ -17,16 +17,6 @@ impl Traceback {
     }
 }
 
-#[derive(Debug, Default)]
-pub(crate) enum TbParseStatus {
-    InFrame {
-        indent: usize,
-        first_line: bool,
-    },
-    #[default]
-    NotInFrame,
-}
-
 #[derive(Debug)]
 pub(crate) enum TbLine<'line> {
     TracebackHeader,
