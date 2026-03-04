@@ -143,6 +143,11 @@ impl TestSuite {
     }
 }
 
+/// For incrementally generating Strings.
+/// 
+/// - Initialise with `let mut str_buf = String::(new);`
+/// - Reset (contents, not capacity) with `str_buf.clear();`
+/// - Extend with `push_...` functions
 trait StringBuffer {
     fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
     fn push_python_line<'strs>(
