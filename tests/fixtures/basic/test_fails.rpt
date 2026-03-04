@@ -1,0 +1,5 @@
+==== test_fails ====
+   def test_fails():
+5:     assert False
+              ^^^^^
+AssertionError
