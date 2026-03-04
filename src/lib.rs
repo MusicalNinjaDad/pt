@@ -89,40 +89,20 @@ impl From<&str> for PyError {
 
 impl TestSuite {
     pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
-        let newline = "\n";
-        let mut test_runner: String = "if __name__ == \"__main__\":".to_string() + newline;
-        push_python_line(
-            &mut test_runner,
-            1,
-            ["from traceback import TracebackException"],
-        );
-        push_python_line(&mut test_runner, 1, ["import sys"]);
+        let mut test_runner = String::new();
+        test_runner.push_python_line(0, ["if __name__ == \"__main__\":"]);
+        test_runner.push_python_line(1, ["from traceback import TracebackException"]);
+        test_runner.push_python_line(1, ["import sys"]);
         self.tests.keys().for_each(|testname| {
-            test_runner.push_str(newline);
-            push_python_line(
-                &mut test_runner,
-                1,
-                ["print(\"", id.as_ref(), " ", testname, " RUNNING\")"],
-            );
-            push_python_line(&mut test_runner, 1, ["try:"]);
-            push_python_line(&mut test_runner, 2, [testname, "()"]);
-            push_python_line(&mut test_runner, 1, ["except Exception:"]);
-            push_python_line(
-                &mut test_runner,
-                2,
-                ["TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)"],
-            );
-            push_python_line(
-                &mut test_runner,
-                2,
-                ["print(\"", id.as_ref(), " ", testname, " FAIL\")"],
-            );
-            push_python_line(&mut test_runner, 1, ["else:"]);
-            push_python_line(
-                &mut test_runner,
-                2,
-                ["print(\"", id.as_ref(), " ", testname, " PASS\")"],
-            );
+            test_runner.push_newline();
+            test_runner.push_python_line(1, ["print(\"", id.as_ref(), " ", testname, " RUNNING\")"]);
+            test_runner.push_python_line( 1, ["try:"]);
+            test_runner.push_python_line( 2, [testname, "()"]);
+            test_runner.push_python_line( 1, ["except Exception:"]);
+            test_runner.push_python_line(2,["TracebackException.from_exception(sys.exception(), capture_locals=True).print(file=sys.stdout)"]);
+            test_runner.push_python_line(2,["print(\"", id.as_ref(), " ", testname, " FAIL\")"]);
+            test_runner.push_python_line(1, ["else:"]);
+            test_runner.push_python_line(2,["print(\"", id.as_ref(), " ", testname, " PASS\")"]);
         });
         self.src.clone() + "\n\n" + &test_runner
     }
@@ -165,9 +145,20 @@ impl TestSuite {
 
 trait StringBuffer {
     fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
+    fn push_python_line<'strs>(
+        &mut self,
+        indent: usize,
+        contents: impl IntoIterator<Item = &'strs str>,
+    );
+    fn push_newline(&mut self);
 }
 
 impl StringBuffer for String {
+    fn push_newline(&mut self) {
+        self.push('\n');
+    }
+
+    /// `indent` with spaces, concatenate `contents`, end with `\n`
     fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>) {
         for _ in 0..indent {
             self.push(' ');
@@ -175,7 +166,16 @@ impl StringBuffer for String {
         for text in contents {
             self.push_str(text);
         }
-        self.push('\n');
+        self.push_newline();
+    }
+
+    /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
+    fn push_python_line<'strs>(
+        &mut self,
+        indent: usize,
+        contents: impl IntoIterator<Item = &'strs str>,
+    ) {
+        self.push_line(4 * indent, contents);
     }
 }
 
@@ -233,19 +233,17 @@ impl TestSuite {
                                 }
                                 prefix = Prefix::LineNumber(frameheader.line_number);
                             }
-                            TbLine::FrameContents { text } => {
-                                match prefix {
-                                    Prefix::LineNumber(lineno) => {
-                                        frame_buf.push_line(0, [lineno,": ", text]);
-                                        prefix = Prefix::Indent(lineno.len() + 2);
-                                    }
-                                    Prefix::Indent(indent) => {
-                                        frame_buf.push_line(indent, [text]);
-                                    }
+                            TbLine::FrameContents { text } => match prefix {
+                                Prefix::LineNumber(lineno) => {
+                                    frame_buf.push_line(0, [lineno, ": ", text]);
+                                    prefix = Prefix::Indent(lineno.len() + 2);
                                 }
-                            }
+                                Prefix::Indent(indent) => {
+                                    frame_buf.push_line(indent, [text]);
+                                }
+                            },
                             TbLine::Exception(err) => {
-                                frame_buf.push_line(0,[err.to_string().as_str()]);
+                                frame_buf.push_line(0, [err.to_string().as_str()]);
                             }
                         }
                     }
@@ -256,21 +254,6 @@ impl TestSuite {
             _ => None,
         }
     }
-}
-
-fn push_python_line<'strs, StrIter>(dst: &mut String, indents: usize, contents: StrIter)
-where
-    StrIter: IntoIterator<Item = &'strs str>,
-{
-    let indent = "    ";
-    let newline = "\n";
-    for _ in 0..indents {
-        dst.push_str(indent);
-    }
-    for text in contents {
-        dst.push_str(text);
-    }
-    dst.push_str(newline);
 }
 
 #[cfg(test)]
