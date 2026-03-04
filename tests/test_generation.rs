@@ -15,7 +15,7 @@ fn load_src(directory: &Path) -> TestSuite {
 mod basic {
     use std::sync::LazyLock;
 
-    use predicates::str::contains;
+    use predicates::{ord::eq, str::contains};
 
     use super::*;
     static ID: &str = "UID";
@@ -79,7 +79,8 @@ mod basic {
     fn cli() {
         let mut pt_cmd = cargo_bin_cmd!("pt");
         pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
-        pt_cmd.assert().stdout(contains("foo"));
+        let expected_stdout = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
+        pt_cmd.assert().stdout(eq(expected_stdout));
     }
 }
 
