@@ -214,50 +214,48 @@ impl TestSuite {
             Indent(usize),
         }
 
-        match &self.tests[testname].status {
-            TestStatus::Fail(err, tb) => match err {
-                PyError::AssertionError => {
-                    let mut frame_buf = String::new();
-                    let mut prefix = Prefix::Indent(0);
-                    for line in tb.lines() {
-                        match line {
-                            TbLine::TracebackHeader => (),
-                            TbLine::FrameHeader(frameheader) => {
-                                let failure = Location::Line(
-                                    usize::from_str(frameheader.line_number).unwrap(),
-                                );
-                                let testfn_def = Location::Position(
-                                    self.tests[testname].code.range.start().into(),
-                                );
-                                let indent = frameheader.line_number.len() + 2;
-                                frame_buf.clear();
-                                frame_buf
-                                    .push_line(0, ["==== ", frameheader.function_name, " ===="]);
-                                for line in self.source(&testfn_def, &failure) {
-                                    frame_buf.push_line(indent, [line]);
-                                }
-                                prefix = Prefix::LineNumber(frameheader.line_number);
+        let TestStatus::Fail(err, tb) = &self.tests[testname].status else {
+            return None;
+        };
+
+        let mut frame_buf = String::new();
+        match err {
+            PyError::AssertionError => {
+                let mut prefix = Prefix::Indent(0);
+                for line in tb.lines() {
+                    match line {
+                        TbLine::TracebackHeader => (),
+                        TbLine::FrameHeader(frameheader) => {
+                            let failure =
+                                Location::Line(usize::from_str(frameheader.line_number).unwrap());
+                            let testfn_def =
+                                Location::Position(self.tests[testname].code.range.start().into());
+                            let indent = frameheader.line_number.len() + 2;
+                            frame_buf.clear();
+                            frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
+                            for line in self.source(&testfn_def, &failure) {
+                                frame_buf.push_line(indent, [line]);
                             }
-                            TbLine::FrameContents { text } => match prefix {
-                                Prefix::LineNumber(lineno) => {
-                                    frame_buf.push_line(0, [lineno, ": ", text]);
-                                    prefix = Prefix::Indent(lineno.len() + 2);
-                                }
-                                Prefix::Indent(indent) => {
-                                    frame_buf.push_line(indent, [text]);
-                                }
-                            },
-                            TbLine::Exception(err) => {
-                                frame_buf.push_line(0, [err.to_string().as_str()]);
+                            prefix = Prefix::LineNumber(frameheader.line_number);
+                        }
+                        TbLine::FrameContents { text } => match prefix {
+                            Prefix::LineNumber(lineno) => {
+                                frame_buf.push_line(0, [lineno, ": ", text]);
+                                prefix = Prefix::Indent(lineno.len() + 2);
                             }
+                            Prefix::Indent(indent) => {
+                                frame_buf.push_line(indent, [text]);
+                            }
+                        },
+                        TbLine::Exception(err) => {
+                            frame_buf.push_line(0, [err.to_string().as_str()]);
                         }
                     }
-                    Some(frame_buf)
                 }
-                _ => todo!(),
-            },
-            _ => None,
-        }
+            }
+            _ => todo!(),
+        };
+        Some(frame_buf)
     }
 }
 
