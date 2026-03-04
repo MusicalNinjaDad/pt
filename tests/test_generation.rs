@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use assert_cmd::cargo::*;
+
 use pt::{PyError, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
@@ -12,6 +14,8 @@ fn load_src(directory: &Path) -> TestSuite {
 
 mod basic {
     use std::sync::LazyLock;
+
+    use predicates::str::contains;
 
     use super::*;
     static ID: &str = "UID";
@@ -69,6 +73,13 @@ mod basic {
         let report = suite.failure_report("test_fails").unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
+    }
+
+    #[test]
+    fn cli() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
+        pt_cmd.assert().stdout(contains("foo"));
     }
 }
 
