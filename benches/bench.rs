@@ -31,7 +31,7 @@ fn benchmarks(c: &mut Criterion) {
             start.elapsed()
         })
     });
-        c.bench_function("pt_complex", |b| {
+    c.bench_function("pt_complex", |b| {
         b.iter_custom(|iters| {
             let start = Instant::now();
             for _ in 0..iters {
@@ -49,7 +49,6 @@ fn benchmarks(c: &mut Criterion) {
             start.elapsed()
         })
     });
-
 }
 
 criterion_group!(basic, benchmarks);
