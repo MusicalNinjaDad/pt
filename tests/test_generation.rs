@@ -75,7 +75,6 @@ mod basic {
     }
 
     #[test]
-    #[ignore]
     fn summary_report() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
@@ -151,7 +150,6 @@ mod complex {
     }
 
     #[test]
-    #[ignore]
     fn summary_report() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();

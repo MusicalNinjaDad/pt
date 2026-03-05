@@ -1,5 +1,6 @@
 #![feature(if_let_guard)]
 
+use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
@@ -28,6 +29,16 @@ pub enum TestStatus {
     NoRun,
     Pass,
     Fail(PyError, Traceback),
+}
+
+impl AsStr for TestStatus {
+    fn as_str(&self) -> &str {
+        match self {
+            TestStatus::NoRun => "NO RUN",
+            TestStatus::Pass => "PASS",
+            TestStatus::Fail(_, _) => "FAIL",
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -209,7 +220,17 @@ impl TestSuite {
 
 impl TestSuite {
     pub fn summary_report(&self) -> String {
-        todo!()
+        let mut summary = String::new();
+        let mut failures = String::new();
+        for (testname, pytest) in &self.tests {
+            summary.push_line(0, [testname, " ", pytest.status.as_str()]);
+            if let Some(failure) = &self.failure_report(testname) {
+                failures.push_newline();
+                failures.push_str(failure);
+            }
+        }
+        summary.push_str(&failures);
+        summary
     }
 
     pub fn failure_report(&self, testname: &str) -> Option<String> {
