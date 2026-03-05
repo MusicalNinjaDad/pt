@@ -17,6 +17,7 @@ ruff_python_parser = { git = "https://github.com/astral-sh/ruff.git" }
 [dev-dependencies]
 assert_cmd = "2.0.14"
 criterion = "0.8.2"
+escargot = "0.5.15"
 predicates = "3.1.0"
 
 [[bench]]

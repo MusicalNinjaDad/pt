@@ -1,12 +1,11 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
-use assert_cmd::{Command, cargo::cargo_bin_cmd};
 use criterion::{Criterion, criterion_group, criterion_main};
+use escargot::CargoBuild;
 
 fn benchmarks(c: &mut Criterion) {
     let pysrc = PathBuf::from("./tests/fixtures/basic/src.py");
-    let mut pt_cmd = cargo_bin_cmd!("pt");
-    pt_cmd.arg(pysrc.as_os_str());
+    let mut pt_cmd = CargoBuild::new().bin("pt").current_release().run().unwrap().command();
     let mut pytest_cmd = Command::new("pytest");
     pytest_cmd.arg(pysrc.as_os_str());
     c.bench_function("pt", |b| b.iter(|| pt_cmd.output()));
