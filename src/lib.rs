@@ -208,6 +208,10 @@ impl TestSuite {
 }
 
 impl TestSuite {
+    pub fn summary_report(&self) -> String {
+        todo!()
+    }
+
     pub fn failure_report(&self, testname: &str) -> Option<String> {
         enum Prefix<'str> {
             LineNumber(&'str str),
