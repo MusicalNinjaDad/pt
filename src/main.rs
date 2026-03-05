@@ -12,4 +12,5 @@ fn main() {
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
     suite.update_status(id, &python_output);
     print!("{}", suite.summary_report())
+    //TODO - exit code
 }
