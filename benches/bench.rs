@@ -5,7 +5,7 @@ use escargot::CargoBuild;
 
 fn benchmarks(c: &mut Criterion) {
     let basic = PathBuf::from("./tests/fixtures/basic/src.py");
-    let complex = PathBuf::from("./tests/fixtures/basic/src.py");
+    let complex = PathBuf::from("./tests/fixtures/complex/src.py");
     let pt_bin = CargoBuild::new()
         .bin("pt")
         .current_release()
