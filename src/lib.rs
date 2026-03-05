@@ -230,6 +230,7 @@ impl TestSuite {
             }
         }
         summary.push_str(&failures);
+        dbg!(&summary);
         summary
     }
 
@@ -248,6 +249,7 @@ impl TestSuite {
             PyError::AssertionError => {
                 let mut prefix = Prefix::Indent(0);
                 for line in tb.lines() {
+                    dbg!(&line);
                     match line {
                         TbLine::TracebackHeader => (),
                         TbLine::FrameHeader(frameheader) => {
@@ -265,10 +267,12 @@ impl TestSuite {
                         }
                         TbLine::FrameContents { text } => match prefix {
                             Prefix::LineNumber(lineno) => {
+                                dbg!(&text);
                                 frame_buf.push_line(0, [lineno, ": ", text]);
                                 prefix = Prefix::Indent(lineno.len() + 2);
                             }
                             Prefix::Indent(indent) => {
+                                dbg!(&text);
                                 frame_buf.push_line(indent, [text]);
                             }
                         },
@@ -276,6 +280,7 @@ impl TestSuite {
                             frame_buf.push_line(0, [err.to_string().as_str()]);
                         }
                     }
+                dbg!(&frame_buf);
                 }
             }
             _ => todo!(),
