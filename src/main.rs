@@ -11,7 +11,5 @@ fn main() {
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
     suite.update_status(id,&python_output);
-    for testname in suite.tests.keys() {
-        print!("{}",suite.failure_report(testname).unwrap_or_default())
-    }
+    print!("{}", suite.summary_report())
 }
