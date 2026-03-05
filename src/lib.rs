@@ -230,7 +230,6 @@ impl TestSuite {
             }
         }
         summary.push_str(&failures);
-        dbg!(&summary);
         summary
     }
 
@@ -280,7 +279,6 @@ impl TestSuite {
                             frame_buf.push_line(0, [err.to_string().as_str()]);
                         }
                     }
-                dbg!(&frame_buf);
                 }
             }
             _ => todo!(),
