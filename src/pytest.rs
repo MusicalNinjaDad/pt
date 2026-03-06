@@ -9,7 +9,7 @@ use crate::{PyError, Traceback};
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
 #[derive(Debug, PartialEq)]
 pub struct Pytest {
-    pub(crate)code: StmtFunctionDef,
+    pub ast: StmtFunctionDef,
     pub status: TestStatus,
 }
 
@@ -17,7 +17,7 @@ impl From<StmtFunctionDef> for Pytest {
     //TODO: convert to TryFrom and include logic to validate whether this is a test function.
     fn from(fndef: StmtFunctionDef) -> Self {
         Self {
-            code: fndef,
+            ast: fndef,
             status: Default::default(),
         }
     }

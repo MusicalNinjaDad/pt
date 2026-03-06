@@ -221,7 +221,7 @@ impl TestSuite {
                             let failure =
                                 Location::Line(usize::from_str(frameheader.line_number).unwrap());
                             let testfn_def =
-                                Location::Position(self.tests[testname].code.range.start().into());
+                                Location::Position(self.tests[testname].ast.range.start().into());
                             let indent = frameheader.line_number.len() + 2;
                             frame_buf.clear();
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
