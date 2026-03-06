@@ -43,6 +43,7 @@ impl<'line> From<&'line str> for TbLine<'line> {
 
 #[derive(Debug)]
 pub(crate) struct FrameHeader<'line> {
+    #[expect(unused)]
     file_name: &'line str,
     pub(crate) function_name: &'line str,
     pub(crate) line_number: &'line str,
