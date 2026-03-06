@@ -27,6 +27,7 @@ impl From<StmtFunctionDef> for Pytest {
 pub enum TestStatus {
     #[default]
     NoRun,
+    Running,
     Pass,
     Fail(PyError, Traceback),
 }
@@ -35,6 +36,7 @@ impl AsStr for TestStatus {
     fn as_str(&self) -> &str {
         match self {
             TestStatus::NoRun => "NO RUN",
+            TestStatus::Running => "RUNNING",
             TestStatus::Pass => "PASS",
             TestStatus::Fail(_, _) => "FAIL",
         }

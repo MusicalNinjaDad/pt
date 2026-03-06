@@ -126,7 +126,7 @@ impl TestSuite {
                             test.status =
                                 TestStatus::Fail(tb_buf.as_str().into(), tb_buf.clone().into())
                         }
-                        Some("RUNNING") => (),
+                        Some("RUNNING") => test.status = TestStatus::Running,
                         _ => todo!(),
                     }
                 }
