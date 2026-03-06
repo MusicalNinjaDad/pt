@@ -9,9 +9,9 @@ use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 use std::str::FromStr;
 
-mod traceback;
-use crate::traceback::TbLine;
-pub use traceback::{PyError, Traceback};
+mod failures;
+use crate::failures::TracebackLine;
+pub use failures::{PyError, Traceback};
 
 mod pytest;
 pub use pytest::{Pytest, TestStatus};
@@ -172,8 +172,8 @@ impl TestSuite {
                 let mut prefix = Prefix::Indent(0);
                 for line in tb.lines() {
                     match line {
-                        TbLine::TracebackHeader => (),
-                        TbLine::FrameHeader(frameheader) => {
+                        TracebackLine::TracebackHeader => (),
+                        TracebackLine::FrameHeader(frameheader) => {
                             let failure =
                                 Location::Line(usize::from_str(frameheader.line_number).unwrap());
                             let testfn_def =
@@ -186,7 +186,7 @@ impl TestSuite {
                             }
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
-                        TbLine::FrameContents { text } => match prefix {
+                        TracebackLine::FrameContents { text } => match prefix {
                             // TODO: compatibility python <3.13 ... need to manually recreate the
                             //       nice details that are in later version Tracebacks
                             Prefix::LineNumber(lineno) => {
@@ -197,7 +197,7 @@ impl TestSuite {
                                 frame_buf.push_line(indent, [text]);
                             }
                         },
-                        TbLine::Exception(err) => {
+                        TracebackLine::Exception(err) => {
                             frame_buf.push_line(0, [err.as_str()]);
                         }
                     }

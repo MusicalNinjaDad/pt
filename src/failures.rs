@@ -1,3 +1,5 @@
+//! Parsing and storing the output from failed tests
+
 use base_traits::AsStr;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -12,20 +14,20 @@ impl From<String> for Traceback {
 }
 
 impl Traceback {
-    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TbLine<'_>> {
-        self.text.lines().map(TbLine::from)
+    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TracebackLine<'_>> {
+        self.text.lines().map(TracebackLine::from)
     }
 }
 
 #[derive(Debug)]
-pub(crate) enum TbLine<'line> {
+pub(crate) enum TracebackLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
     FrameContents { text: &'line str },
     Exception(PyError),
 }
 
-impl<'line> From<&'line str> for TbLine<'line> {
+impl<'line> From<&'line str> for TracebackLine<'line> {
     fn from(line: &'line str) -> Self {
         match line.split_whitespace().next() {
             Some("Traceback") => Self::TracebackHeader,
