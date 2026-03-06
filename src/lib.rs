@@ -109,9 +109,6 @@ impl TestSuite {
         for line in stdout.lines() {
             let mut words = line.split_ascii_whitespace();
             match words.next() {
-                Some("Traceback") => {
-                    tb_buf = line.to_string();
-                }
                 Some(id_) if id_ == id => {
                     let Some(testname) = words.next() else {
                         todo!("Make update_status fallible")
@@ -129,15 +126,12 @@ impl TestSuite {
                         Some("RUNNING") => test.status = TestStatus::Running,
                         _ => todo!(),
                     }
+                    tb_buf.clear();
                 }
                 Some(_) => {
-                    tb_buf.push('\n');
-                    tb_buf.push_str(line);
+                    tb_buf.push_line(0,[line]);
                 }
-                None => {
-                    tb_buf.push('\n');
-                    tb_buf.push_str(line);
-                }
+                None => {todo!("Make update_status fallible")}
             }
         }
     }
