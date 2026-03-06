@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use base_traits::AsStr;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
@@ -69,10 +69,10 @@ pub enum PyError {
     Other,
 }
 
-impl Display for PyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl AsStr for PyError {
+    fn as_str(&self) -> &str {
         match self {
-            Self::AssertionError => write!(f, "AssertionError"),
+            Self::AssertionError => "AssertionError",
             Self::Other => todo!(),
         }
     }

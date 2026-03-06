@@ -198,7 +198,7 @@ impl TestSuite {
                             }
                         },
                         TbLine::Exception(err) => {
-                            frame_buf.push_line(0, [err.to_string().as_str()]);
+                            frame_buf.push_line(0, [err.as_str()]);
                         }
                     }
                 }
