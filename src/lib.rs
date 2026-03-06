@@ -117,9 +117,11 @@ impl TestSuite {
                     tb_buf.clear();
                 }
                 Some(_) => {
-                    tb_buf.push_line(0,[line]);
+                    tb_buf.push_line(0, [line]);
                 }
-                None => {todo!("Make update_status fallible")}
+                None => {
+                    todo!("Make update_status fallible")
+                }
             }
         }
     }
