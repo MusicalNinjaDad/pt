@@ -10,8 +10,8 @@ use ruff_python_parser::{ParseError, parse_module};
 use std::str::FromStr;
 
 mod traceback;
-use crate::traceback::TbLine;
 pub use traceback::{PyError, Traceback};
+use crate::traceback::TbLine;
 
 mod pytest;
 pub use pytest::{Pytest, TestStatus};
