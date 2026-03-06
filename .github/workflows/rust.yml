@@ -18,10 +18,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: 3.13
     - name: Build
       run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Run tests Python 3.13
+      run: python -V && cargo test --verbose
+    - uses: actions/setup-python@v6
+      with:
+        python-version: 3.14
+    - name: Run tests Python 3.14
+      run: python -V && cargo test --verbose
+
+
 
   lint:
     runs-on: ubuntu-latest

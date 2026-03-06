@@ -264,6 +264,8 @@ impl TestSuite {
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
                         TbLine::FrameContents { text } => match prefix {
+                            // TODO: compatibility python <3.13 ... need to manually recreate the
+                            //       nice details that are in later version Tracebacks
                             Prefix::LineNumber(lineno) => {
                                 frame_buf.push_line(0, [lineno, ": ", text]);
                                 prefix = Prefix::Indent(lineno.len() + 2);
