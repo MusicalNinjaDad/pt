@@ -1,17 +1,20 @@
 #![feature(if_let_guard)]
-/// All core `pt` functionality ìs available as a library. This primarily consists of parsing and
-/// report / code generation.
-///
-/// Main entry point is `TestSuite`
+//! All core `pt` functionality ìs available as a library. This primarily consists of parsing and
+//! report / code generation.
+//!
+//! Main entry point is `TestSuite`
 use base_traits::AsStr;
 use indexmap::IndexMap;
-use ruff_python_ast::{Stmt, StmtFunctionDef};
+use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 use std::str::FromStr;
 
 mod traceback;
 use crate::traceback::TbLine;
 pub use traceback::{PyError, Traceback};
+
+mod pytest;
+pub use pytest::{Pytest, TestStatus};
 
 /// A suite of tests from a single python source file.
 ///
@@ -40,41 +43,6 @@ pub struct TestSuite {
     pub tests: IndexMap<String, Pytest>,
 }
 
-/// A single test. Does not store the original source text.
-#[derive(Debug, PartialEq)]
-pub struct Pytest {
-    code: StmtFunctionDef,
-    pub status: TestStatus,
-}
-
-#[derive(Debug, Default, PartialEq, Eq)]
-pub enum TestStatus {
-    #[default]
-    NoRun,
-    Pass,
-    Fail(PyError, Traceback),
-}
-
-impl AsStr for TestStatus {
-    fn as_str(&self) -> &str {
-        match self {
-            TestStatus::NoRun => "NO RUN",
-            TestStatus::Pass => "PASS",
-            TestStatus::Fail(_, _) => "FAIL",
-        }
-    }
-}
-
-impl From<StmtFunctionDef> for Pytest {
-    //TODO: convert to TryFrom and handle not a valid function_def
-    fn from(fndef: StmtFunctionDef) -> Self {
-        Self {
-            code: fndef,
-            status: Default::default(),
-        }
-    }
-}
-
 impl TryFrom<&str> for TestSuite {
     type Error = ParseError;
     fn try_from(src: &str) -> Result<Self, Self::Error> {
@@ -96,7 +64,6 @@ impl TryFrom<&str> for TestSuite {
         })
     }
 }
-
 
 impl TestSuite {
     pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
