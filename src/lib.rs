@@ -110,15 +110,9 @@ impl TestSuite {
             let mut words = line.split_ascii_whitespace();
             match words.next() {
                 Some(id_) if id_ == id => {
-                    let Some(testname) = words.next() else {
-                        todo!("Make update_status fallible")
-                    };
-                    let Some(test) = self.tests.get_mut(testname) else {
-                        todo!("Make update_status fallible")
-                    };
-                    let Some(status) = words.next() else {
-                        todo!("Make update_status fallible")
-                    };
+                    let testname = words.next().unwrap();
+                    let test = self.tests.get_mut(testname).unwrap();
+                    let status = words.next().unwrap();
                     test.status = (status, tb_buf.as_str()).into();
                     tb_buf.clear();
                 }
