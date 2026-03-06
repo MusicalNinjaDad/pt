@@ -107,7 +107,7 @@ impl TestSuite {
     pub fn update_status(&mut self, id: &str, stdout: &str) {
         let mut tb_buf = String::new();
         for line in stdout.lines() {
-            let mut words = line.split_ascii_whitespace();
+            let mut words = line.split_whitespace();
             match words.next() {
                 Some(id_) if id_ == id => {
                     let testname = words.next().unwrap();
