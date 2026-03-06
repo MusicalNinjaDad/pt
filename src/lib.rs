@@ -116,16 +116,10 @@ impl TestSuite {
                     let Some(test) = self.tests.get_mut(testname) else {
                         todo!("Make update_status fallible")
                     };
-
-                    match words.next() {
-                        Some("PASS") => test.status = TestStatus::Pass,
-                        Some("FAIL") => {
-                            test.status =
-                                TestStatus::Fail(tb_buf.as_str().into(), tb_buf.clone().into())
-                        }
-                        Some("RUNNING") => test.status = TestStatus::Running,
-                        _ => todo!(),
-                    }
+                    let Some(status) = words.next() else {
+                        todo!("Make update_status fallible")
+                    };
+                    test.status = (status, tb_buf.as_str()).into();
                     tb_buf.clear();
                 }
                 Some(_) => {

@@ -42,3 +42,14 @@ impl AsStr for TestStatus {
         }
     }
 }
+
+impl From<(&str, &str)> for TestStatus {
+    fn from((status, traceback): (&str, &str)) -> Self {
+        match status {
+            "RUNNING" => Self::Running,
+            "PASS" => Self::Pass,
+            "FAIL" => Self::Fail(traceback.into(), traceback.into()),
+            _ => todo!("Make fallible"),
+        }
+    }
+}

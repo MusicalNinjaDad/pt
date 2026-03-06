@@ -13,6 +13,12 @@ impl From<String> for Traceback {
     }
 }
 
+impl From<&str> for Traceback {
+    fn from(text: &str) -> Self {
+        Self { text: text.to_string() }
+    }
+}
+
 impl Traceback {
     pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TracebackLine<'_>> {
         self.text.lines().map(TracebackLine::from)
