@@ -21,17 +21,13 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: 3.13
-    - name: Build
-      run: cargo build --verbose
     - name: Run tests Python 3.13
-      run: python -V && cargo test --verbose
+      run: python -V && cargo test
     - uses: actions/setup-python@v6
       with:
         python-version: "3.x"
     - name: Run tests Python latest
-      run: python -V && cargo test --verbose
-
-
+      run: python -V && cargo test
 
   lint:
     runs-on: ubuntu-latest
