@@ -1,4 +1,4 @@
-use crate::PyError;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
@@ -58,6 +58,31 @@ impl<'line> From<&'line str> for FrameHeader<'line> {
             file_name,
             function_name,
             line_number,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PyError {
+    AssertionError,
+    Other,
+}
+
+impl Display for PyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AssertionError => write!(f, "AssertionError"),
+            Self::Other => todo!(),
+        }
+    }
+}
+
+impl From<&str> for PyError {
+    fn from(traceback: &str) -> Self {
+        let lastline = traceback.lines().last().unwrap();
+        match lastline {
+            "AssertionError" => Self::AssertionError,
+            _ => Self::Other,
         }
     }
 }

@@ -1,22 +1,46 @@
 #![feature(if_let_guard)]
-
+/// All core `pt` functionality ìs available as a library. This primarily consists of parsing and
+/// report / code generation.
+///
+/// Main entry point is `TestSuite`
 use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::{Stmt, StmtFunctionDef};
 use ruff_python_parser::{ParseError, parse_module};
-use std::{fmt::Display, str::FromStr};
+use std::str::FromStr;
 
 mod traceback;
-pub use traceback::Traceback;
-
 use crate::traceback::TbLine;
+pub use traceback::{PyError, Traceback};
 
+/// A suite of tests from a single python source file.
+///
+/// Usage:
+/// ```rust
+/// use pt::TestSuite;
+/// let src = "def test_passes():\n    assert True\n";
+///
+/// // Parse python source to generate a TestSuite
+/// let mut tests = TestSuite::try_from(src).unwrap();
+///
+/// // Generate a test runner to run with python
+/// let runner = tests.runner("RUNNER_1");
+///
+/// // Update the test status with the output from the runner
+/// tests.update_status("RUNNER_1", "RUNNER_1 test_passes PASS\n");
+///
+/// // Generate a summary execution report
+/// let summary = tests.summary_report();
+/// assert_eq!("test_passes PASS\n", summary)
+/// ```
 #[derive(Debug, PartialEq)]
 pub struct TestSuite {
     src: String,
+    /// indexed by test name, retains ordering from original python source
     pub tests: IndexMap<String, Pytest>,
 }
 
+/// A single test. Does not store the original source text.
 #[derive(Debug, PartialEq)]
 pub struct Pytest {
     code: StmtFunctionDef,
@@ -37,21 +61,6 @@ impl AsStr for TestStatus {
             TestStatus::NoRun => "NO RUN",
             TestStatus::Pass => "PASS",
             TestStatus::Fail(_, _) => "FAIL",
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PyError {
-    AssertionError,
-    Other,
-}
-
-impl Display for PyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::AssertionError => write!(f, "AssertionError"),
-            Self::Other => todo!(),
         }
     }
 }
@@ -88,15 +97,6 @@ impl TryFrom<&str> for TestSuite {
     }
 }
 
-impl From<&str> for PyError {
-    fn from(traceback: &str) -> Self {
-        let lastline = traceback.lines().last().unwrap();
-        match lastline {
-            "AssertionError" => Self::AssertionError,
-            _ => Self::Other,
-        }
-    }
-}
 
 impl TestSuite {
     pub fn runner<ID: AsRef<str>>(&self, id: ID) -> String {
