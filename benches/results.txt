@@ -1,0 +1,19 @@
+pt_basic                time:   [46.542 ms 47.027 ms 47.516 ms]
+
+Benchmarking pytest_basic: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 28.6s, or reduce sample count to 10.
+pytest_basic            time:   [255.40 ms 257.88 ms 260.48 ms]
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+
+pt_complex              time:   [46.722 ms 47.869 ms 49.112 ms]
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking pytest_complex: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 26.9s, or reduce sample count to 10.
+pytest_complex          time:   [260.32 ms 263.86 ms 267.67 ms]
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe

@@ -3,6 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use assert_cmd::cargo::*;
+use predicates::ord::eq;
+
 use pt::{PyError, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
@@ -70,6 +73,24 @@ mod basic {
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
     }
+
+    #[test]
+    fn summary_report() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.summary_report();
+        let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        assert_eq!(expect_rpt, report);
+    }
+
+    #[test]
+    fn cli() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
+        let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        pt_cmd.assert().stdout(eq(expected_stdout));
+    }
 }
 
 mod complex {
@@ -126,5 +147,23 @@ mod complex {
         let report = suite.failure_report("test_seven_is_six").unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_seven_is_six.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
+    }
+
+    #[test]
+    fn summary_report() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.summary_report();
+        let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        assert_eq!(expect_rpt, report);
+    }
+
+    #[test]
+    fn cli() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
+        let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        pt_cmd.assert().stdout(eq(expected_stdout));
     }
 }
