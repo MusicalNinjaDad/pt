@@ -88,9 +88,21 @@ impl TestSuite {
 
     /// Returns a PythonTest with non-mutable references to both the full python source text and the
     /// test details.
-    pub fn test<'suite, 'name>(&'suite self, testname: &'name str) -> Option<PythonTest<'name,'suite, '_>> {
+    pub fn test<'suite, 'name>(
+        &'suite self,
+        testname: &'name str,
+    ) -> Option<PythonTest<'name, 'suite, '_>> {
         let testdetails = self.tests.get(testname)?;
         Some(PythonTest {
+            testname,
+            full_src: &self.src,
+            test_ast: &testdetails.ast,
+            status: &testdetails.status,
+        })
+    }
+
+    pub fn tests(&'_ self) -> impl Iterator<Item = PythonTest<'_, '_, '_>> {
+        self.tests.iter().map(|(testname, testdetails)| PythonTest {
             testname,
             full_src: &self.src,
             test_ast: &testdetails.ast,
@@ -125,9 +137,8 @@ impl TestSuite {
     pub fn summary_report(&self) -> String {
         let mut summary = String::new();
         let mut details = String::new();
-        for (testname, _) in &self.tests {
-            let pytest = self.test(testname).unwrap();
-            summary.push_line(0, [testname, " ", pytest.status.as_str()]);
+        for pytest in self.tests() {
+            summary.push_line(0, [pytest.testname, " ", pytest.status.as_str()]);
             if let Some(report) = pytest.report() {
                 details.push_newline();
                 details.push_str(&report);
