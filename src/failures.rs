@@ -2,7 +2,7 @@
 
 use base_traits::AsStr;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
     text: String,
 }
@@ -27,7 +27,7 @@ impl Traceback {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum TracebackLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
@@ -51,9 +51,8 @@ impl<'line> From<&'line str> for TracebackLine<'line> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct FrameHeader<'line> {
-    #[expect(unused)]
     file_name: &'line str,
     pub(crate) function_name: &'line str,
     pub(crate) line_number: &'line str,

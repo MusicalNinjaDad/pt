@@ -55,7 +55,7 @@ impl Pytest {
                             for line in suite.source(&testfn_def, &failure) {
                                 frame_buf.push_line(indent, [line]);
                             }
-                            
+
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
                         TracebackLine::FrameContents { text } => match prefix {
@@ -81,7 +81,7 @@ impl Pytest {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TestStatus {
     #[default]
     NoRun,

@@ -34,7 +34,7 @@ pub use pytest::{Pytest, TestStatus};
 /// let summary = tests.summary_report();
 /// assert_eq!("test_passes PASS\n", summary)
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct TestSuite {
     src: String,
     /// indexed by test name, retains ordering from original python source
@@ -183,6 +183,7 @@ impl StringBuffer for String {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Location {
     Position(usize),
     Line(usize),
