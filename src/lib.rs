@@ -91,7 +91,7 @@ impl TestSuite {
     pub fn test<'suite, 'name>(
         &'suite self,
         testname: &'name str,
-    ) -> Option<PythonTest<'name, 'suite, '_>> {
+    ) -> Option<PythonTest<'name, 'suite, 'suite>> {
         let testdetails = self.tests.get(testname)?;
         Some(PythonTest {
             testname,

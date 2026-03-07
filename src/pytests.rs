@@ -5,7 +5,7 @@ use std::str::FromStr;
 use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
-use crate::{Location, PyError, StringBuffer, TestSuite, Traceback, failures::TracebackLine};
+use crate::{Location, PyError, StringBuffer, Traceback, failures::TracebackLine};
 
 /// A single test, with references to the related test suite and the test details.
 #[derive(Debug, PartialEq)]
