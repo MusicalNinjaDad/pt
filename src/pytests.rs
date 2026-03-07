@@ -7,7 +7,7 @@ use ruff_python_ast::StmtFunctionDef;
 
 use crate::{Location, PyError, StringBuffer, Traceback, failures::TracebackLine};
 
-/// A single test, with references to the related test suite and the test details.
+/// A single test, with references to the full module source and the test details.
 #[derive(Debug, PartialEq)]
 pub struct PythonTest<'name, 'suite, 'details> {
     pub testname: &'name str,
