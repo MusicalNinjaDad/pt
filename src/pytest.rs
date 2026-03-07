@@ -26,6 +26,7 @@ impl From<StmtFunctionDef> for Pytest {
 }
 
 impl Pytest {
+    /// Produce a test execution report.
     pub fn report(&self, suite: &TestSuite) -> Option<String> {
         enum Prefix<'str> {
             LineNumber(&'str str),
