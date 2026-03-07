@@ -44,15 +44,18 @@ impl Pytest {
                     match line {
                         TracebackLine::TracebackHeader => (),
                         TracebackLine::FrameHeader(frameheader) => {
+                            frame_buf.clear(); // We only want details from the last frame
+
                             let failure =
                                 Location::Line(usize::from_str(frameheader.line_number).unwrap());
                             let testfn_def = Location::Position(self.ast.range.start().into());
                             let indent = frameheader.line_number.len() + 2;
-                            frame_buf.clear();
+
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
                             for line in suite.source(&testfn_def, &failure) {
                                 frame_buf.push_line(indent, [line]);
                             }
+                            
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
                         TracebackLine::FrameContents { text } => match prefix {
