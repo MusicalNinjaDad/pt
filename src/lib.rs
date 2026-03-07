@@ -101,6 +101,7 @@ impl TestSuite {
         })
     }
 
+    /// Iterate over all tests.
     pub fn tests(&'_ self) -> impl Iterator<Item = PythonTest<'_, '_, '_>> {
         self.tests.iter().map(|(testname, testdetails)| PythonTest {
             testname,
@@ -155,7 +156,9 @@ impl TestSuite {
 /// - Reset (contents, not capacity) with `str_buf.clear();`
 /// - Extend with `push_...` functions
 trait StringBuffer {
+    /// `indent` with spaces, concatenate `contents`, end with `\n`
     fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
+    /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
     fn push_python_line<'strs>(
         &mut self,
         indent: usize,
