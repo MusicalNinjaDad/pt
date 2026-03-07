@@ -41,10 +41,10 @@ pub struct TestSuite {
     pub tests: IndexMap<String, Pytest>,
 }
 
-impl TryFrom<&str> for TestSuite {
+impl TryFrom<String> for TestSuite {
     type Error = ParseError;
-    fn try_from(src: &str) -> Result<Self, Self::Error> {
-        let tests: IndexMap<String, Pytest> = parse_module(src)?
+    fn try_from(src: String) -> Result<Self, Self::Error> {
+        let tests: IndexMap<String, Pytest> = parse_module(&src)?
             .into_suite()
             .into_iter()
             .filter_map(|stmt| -> Option<(String, Pytest)> {
@@ -56,10 +56,7 @@ impl TryFrom<&str> for TestSuite {
                 }
             })
             .collect();
-        Ok(Self {
-            src: src.to_string(),
-            tests,
-        })
+        Ok(Self { src, tests })
     }
 }
 
@@ -198,7 +195,7 @@ mod tests {
         let src = r"def test_passes():
     assert True
 ";
-        let pytests: TestSuite = src.try_into().unwrap();
+        let pytests: TestSuite = src.to_string().try_into().unwrap();
         assert_eq!(1, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_passes"));
     }
@@ -215,7 +212,7 @@ def test_fails():
 def test_passes():
     assert True
 ";
-        let pytests: TestSuite = src.try_into().unwrap();
+        let pytests: TestSuite = src.to_string().try_into().unwrap();
         assert_eq!(2, pytests.tests.len());
         assert!(pytests.tests.contains_key("test_fails"));
         assert!(pytests.tests.contains_key("test_passes"));

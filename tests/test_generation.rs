@@ -10,7 +10,7 @@ use pt::{PyError, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
     let src = fs::read_to_string(directory.join("src.py")).unwrap();
-    TestSuite::try_from(src.as_str()).unwrap()
+    TestSuite::try_from(src).unwrap()
 }
 
 mod basic {
