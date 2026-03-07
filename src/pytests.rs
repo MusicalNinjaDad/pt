@@ -19,7 +19,7 @@ pub struct PythonTest<'name, 'suite, 'details> {
 /// Owned details of single test. Does not store the original source text, only the AST.
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
 #[derive(Debug, PartialEq)]
-pub struct TestDetails {
+pub(crate) struct TestDetails {
     pub ast: StmtFunctionDef,
     pub status: TestStatus,
 }

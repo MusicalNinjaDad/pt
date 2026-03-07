@@ -12,9 +12,9 @@ mod failures;
 pub use failures::{PyError, Traceback};
 
 mod pytests;
-pub use pytests::{TestDetails, TestStatus};
+pub use pytests::{PythonTest, TestStatus};
 
-use crate::pytests::PythonTest;
+use crate::pytests::TestDetails;
 
 /// A suite of tests from a single python source file.
 ///
