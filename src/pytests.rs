@@ -9,7 +9,8 @@ use crate::{Location, PyError, StringBuffer, TestSuite, Traceback, failures::Tra
 
 /// A single test, with references to the related test suite and the test details.
 #[derive(Debug, PartialEq)]
-pub struct PythonTest<'suite, 'details> {
+pub struct PythonTest<'name, 'suite, 'details> {
+    pub testname: &'name str,
     pub full_src: &'suite str,
     pub test_ast: &'details StmtFunctionDef,
     pub status: &'details TestStatus,
@@ -33,7 +34,7 @@ impl From<StmtFunctionDef> for TestDetails {
     }
 }
 
-impl PythonTest<'_, '_> {
+impl PythonTest<'_, '_, '_> {
     /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
     fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
         let start_line = match start {

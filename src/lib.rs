@@ -86,27 +86,12 @@ impl TestSuite {
         test_runner
     }
 
-    /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
-    fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
-        let start_line = match start {
-            Location::Position(pos) => self.src[0..*pos].lines().count(),
-            Location::Line(_) => todo!(),
-        };
-        let end_line = match end {
-            Location::Position(_) => todo!(),
-            Location::Line(line) => *line - 1,
-        };
-        self.src
-            .lines()
-            .skip(start_line)
-            .take(end_line - start_line)
-    }
-
     /// Returns a PythonTest with non-mutable references to both the full python source text and the
     /// test details.
-    pub fn test(&self, testname: &str) -> Option<PythonTest<'_, '_>> {
+    pub fn test<'suite, 'name>(&'suite self, testname: &'name str) -> Option<PythonTest<'name,'suite, '_>> {
         let testdetails = self.tests.get(testname)?;
         Some(PythonTest {
+            testname,
             full_src: &self.src,
             test_ast: &testdetails.ast,
             status: &testdetails.status,
