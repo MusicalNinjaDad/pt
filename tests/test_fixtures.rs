@@ -10,7 +10,7 @@ use pt::{PyError, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
     let src = fs::read_to_string(directory.join("src.py")).unwrap();
-    TestSuite::try_from(src.as_str()).unwrap()
+    TestSuite::try_from(src).unwrap()
 }
 
 mod basic {
@@ -23,7 +23,7 @@ mod basic {
     #[test]
     fn suite_from_src() {
         let suite = load_src(&FIXTURES);
-        assert_eq!(2, suite.tests.len());
+        assert_eq!(2, suite.tests().collect::<Vec<_>>().len());
     }
 
     #[test]
@@ -39,13 +39,13 @@ mod basic {
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
         assert!(matches!(
-            &suite.tests["test_passes"].status,
+            &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
         ));
         let expect_tb: Traceback = fs::read_to_string(FIXTURES.join("test_fails.tb"))
             .unwrap()
             .into();
-        let tf_status = &suite.tests["test_fails"].status;
+        let tf_status = &suite.test("test_fails").unwrap().status;
         assert!(
             matches!(tf_status, TestStatus::Fail(err, tb)
                 if matches!(err, PyError::AssertionError)
@@ -60,7 +60,7 @@ mod basic {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.failure_report("test_passes");
+        let report = suite.test("test_passes").unwrap().report();
         assert!(report.is_none());
     }
 
@@ -69,7 +69,7 @@ mod basic {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.failure_report("test_fails").unwrap();
+        let report = suite.test("test_fails").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
     }
@@ -104,7 +104,7 @@ mod complex {
     #[test]
     fn suite_from_src() {
         let suite = load_src(&FIXTURES);
-        assert_eq!(3, suite.tests.len());
+        assert_eq!(3, suite.tests().collect::<Vec<_>>().len());
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod complex {
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
         assert!(matches!(
-            &suite.tests["test_passes"].status,
+            &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
         ));
         for failed_test in ["test_fails", "test_seven_is_six"] {
@@ -128,7 +128,7 @@ mod complex {
                 fs::read_to_string(FIXTURES.join(failed_test).with_added_extension("tb"))
                     .unwrap()
                     .into();
-            let tf_status = &suite.tests[failed_test].status;
+            let tf_status = &suite.test(failed_test).unwrap().status;
             assert!(
                 matches!(tf_status, TestStatus::Fail(err, tb)
                     if matches!(err, PyError::AssertionError)
@@ -144,7 +144,7 @@ mod complex {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.failure_report("test_seven_is_six").unwrap();
+        let report = suite.test("test_seven_is_six").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_seven_is_six.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
     }
