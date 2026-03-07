@@ -23,7 +23,7 @@ mod basic {
     #[test]
     fn suite_from_src() {
         let suite = load_src(&FIXTURES);
-        assert_eq!(2, suite.tests.len());
+        assert_eq!(2, suite.tests().collect::<Vec<_>>().len());
     }
 
     #[test]
@@ -39,13 +39,13 @@ mod basic {
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
         assert!(matches!(
-            &suite.tests["test_passes"].status,
+            &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
         ));
         let expect_tb: Traceback = fs::read_to_string(FIXTURES.join("test_fails.tb"))
             .unwrap()
             .into();
-        let tf_status = &suite.tests["test_fails"].status;
+        let tf_status = &suite.test("test_fails").unwrap().status;
         assert!(
             matches!(tf_status, TestStatus::Fail(err, tb)
                 if matches!(err, PyError::AssertionError)
@@ -104,7 +104,7 @@ mod complex {
     #[test]
     fn suite_from_src() {
         let suite = load_src(&FIXTURES);
-        assert_eq!(3, suite.tests.len());
+        assert_eq!(3, suite.tests().collect::<Vec<_>>().len());
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod complex {
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
         assert!(matches!(
-            &suite.tests["test_passes"].status,
+            &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
         ));
         for failed_test in ["test_fails", "test_seven_is_six"] {
@@ -128,7 +128,7 @@ mod complex {
                 fs::read_to_string(FIXTURES.join(failed_test).with_added_extension("tb"))
                     .unwrap()
                     .into();
-            let tf_status = &suite.tests[failed_test].status;
+            let tf_status = &suite.test(failed_test).unwrap().status;
             assert!(
                 matches!(tf_status, TestStatus::Fail(err, tb)
                     if matches!(err, PyError::AssertionError)

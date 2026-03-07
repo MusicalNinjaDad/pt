@@ -40,7 +40,7 @@ use crate::pytests::PythonTest;
 pub struct TestSuite {
     src: String,
     /// indexed by test name, retains ordering from original python source
-    pub tests: IndexMap<String, TestDetails>,
+    tests: IndexMap<String, TestDetails>,
 }
 
 impl TryFrom<String> for TestSuite {
@@ -137,9 +137,9 @@ impl TestSuite {
     pub fn summary_report(&self) -> String {
         let mut summary = String::new();
         let mut details = String::new();
-        for pytest in self.tests() {
-            summary.push_line(0, [pytest.testname, " ", pytest.status.as_str()]);
-            if let Some(report) = pytest.report() {
+        for test in self.tests() {
+            summary.push_line(0, [test.testname, " ", test.status.as_str()]);
+            if let Some(report) = test.report() {
                 details.push_newline();
                 details.push_str(&report);
             }
