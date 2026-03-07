@@ -1,9 +1,11 @@
 //!Handling individual tests & their status
 
+use std::str::FromStr;
+
 use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
-use crate::{PyError, Traceback};
+use crate::{Location, PyError, StringBuffer, TestSuite, Traceback, failures::TracebackLine};
 
 /// A single test. Does not store the original source text, only the AST.
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
@@ -20,6 +22,59 @@ impl From<StmtFunctionDef> for Pytest {
             ast: fndef,
             status: Default::default(),
         }
+    }
+}
+
+impl Pytest {
+    pub fn report(&self, suite: &TestSuite) -> Option<String> {
+        enum Prefix<'str> {
+            LineNumber(&'str str),
+            Indent(usize),
+        }
+
+        let TestStatus::Fail(err, tb) = &self.status else {
+            return None;
+        };
+
+        let mut frame_buf = String::new();
+        match err {
+            PyError::AssertionError => {
+                let mut prefix = Prefix::Indent(0);
+                for line in tb.lines() {
+                    match line {
+                        TracebackLine::TracebackHeader => (),
+                        TracebackLine::FrameHeader(frameheader) => {
+                            let failure =
+                                Location::Line(usize::from_str(frameheader.line_number).unwrap());
+                            let testfn_def = Location::Position(self.ast.range.start().into());
+                            let indent = frameheader.line_number.len() + 2;
+                            frame_buf.clear();
+                            frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
+                            for line in suite.source(&testfn_def, &failure) {
+                                frame_buf.push_line(indent, [line]);
+                            }
+                            prefix = Prefix::LineNumber(frameheader.line_number);
+                        }
+                        TracebackLine::FrameContents { text } => match prefix {
+                            // TODO: compatibility python <3.13 ... need to manually recreate the
+                            //       nice details that are in later version Tracebacks
+                            Prefix::LineNumber(lineno) => {
+                                frame_buf.push_line(0, [lineno, ": ", text]);
+                                prefix = Prefix::Indent(lineno.len() + 2);
+                            }
+                            Prefix::Indent(indent) => {
+                                frame_buf.push_line(indent, [text]);
+                            }
+                        },
+                        TracebackLine::Exception(err) => {
+                            frame_buf.push_line(0, [err.as_str()]);
+                        }
+                    }
+                }
+            }
+            _ => todo!(),
+        };
+        Some(frame_buf)
     }
 }
 

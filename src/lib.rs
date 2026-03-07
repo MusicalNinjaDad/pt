@@ -7,10 +7,8 @@ use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
-use std::str::FromStr;
 
 mod failures;
-use crate::failures::TracebackLine;
 pub use failures::{PyError, Traceback};
 
 mod pytest;
@@ -131,70 +129,16 @@ impl TestSuite {
     /// List all tests with status, then provide failure reports for all failed tests.
     pub fn summary_report(&self) -> String {
         let mut summary = String::new();
-        let mut failures = String::new();
+        let mut details = String::new();
         for (testname, pytest) in &self.tests {
             summary.push_line(0, [testname, " ", pytest.status.as_str()]);
-            if let Some(failure) = &self.failure_report(testname) {
-                failures.push_newline();
-                failures.push_str(failure);
+            if let Some(report) = pytest.report(self) {
+                details.push_newline();
+                details.push_str(&report);
             }
         }
-        summary.push_str(&failures);
+        summary.push_str(&details);
         summary
-    }
-
-    /// A nice extended report to make it easier to understand failed tests, similar to pytest's
-    /// re-written assertions.
-    pub fn failure_report(&self, testname: &str) -> Option<String> {
-        enum Prefix<'str> {
-            LineNumber(&'str str),
-            Indent(usize),
-        }
-
-        let TestStatus::Fail(err, tb) = &self.tests[testname].status else {
-            return None;
-        };
-
-        let mut frame_buf = String::new();
-        match err {
-            PyError::AssertionError => {
-                let mut prefix = Prefix::Indent(0);
-                for line in tb.lines() {
-                    match line {
-                        TracebackLine::TracebackHeader => (),
-                        TracebackLine::FrameHeader(frameheader) => {
-                            let failure =
-                                Location::Line(usize::from_str(frameheader.line_number).unwrap());
-                            let testfn_def =
-                                Location::Position(self.tests[testname].ast.range.start().into());
-                            let indent = frameheader.line_number.len() + 2;
-                            frame_buf.clear();
-                            frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
-                            for line in self.source(&testfn_def, &failure) {
-                                frame_buf.push_line(indent, [line]);
-                            }
-                            prefix = Prefix::LineNumber(frameheader.line_number);
-                        }
-                        TracebackLine::FrameContents { text } => match prefix {
-                            // TODO: compatibility python <3.13 ... need to manually recreate the
-                            //       nice details that are in later version Tracebacks
-                            Prefix::LineNumber(lineno) => {
-                                frame_buf.push_line(0, [lineno, ": ", text]);
-                                prefix = Prefix::Indent(lineno.len() + 2);
-                            }
-                            Prefix::Indent(indent) => {
-                                frame_buf.push_line(indent, [text]);
-                            }
-                        },
-                        TracebackLine::Exception(err) => {
-                            frame_buf.push_line(0, [err.as_str()]);
-                        }
-                    }
-                }
-            }
-            _ => todo!(),
-        };
-        Some(frame_buf)
     }
 }
 
