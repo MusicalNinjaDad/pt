@@ -21,7 +21,7 @@ use crate::pytests::PythonTest;
 /// Usage:
 /// ```rust
 /// use pt::TestSuite;
-/// let src = "def test_passes():\n    assert True\n";
+/// let src = String::from("def test_passes():\n    assert True\n");
 ///
 /// // Parse python source to generate a TestSuite
 /// let mut tests = TestSuite::try_from(src).unwrap();
