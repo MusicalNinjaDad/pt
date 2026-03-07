@@ -10,12 +10,12 @@ use crate::{Location, PyError, StringBuffer, TestSuite, Traceback, failures::Tra
 /// A single test. Does not store the original source text, only the AST.
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
 #[derive(Debug, PartialEq)]
-pub struct Pytest {
+pub struct TestDetails {
     pub ast: StmtFunctionDef,
     pub status: TestStatus,
 }
 
-impl From<StmtFunctionDef> for Pytest {
+impl From<StmtFunctionDef> for TestDetails {
     //TODO: convert to TryFrom and include logic to validate whether this is a test function.
     fn from(fndef: StmtFunctionDef) -> Self {
         Self {
@@ -25,7 +25,7 @@ impl From<StmtFunctionDef> for Pytest {
     }
 }
 
-impl Pytest {
+impl TestDetails {
     /// Produce a test execution report.
     pub fn report(&self, suite: &TestSuite) -> Option<String> {
         enum Prefix<'str> {

@@ -11,8 +11,8 @@ use ruff_python_parser::{ParseError, parse_module};
 mod failures;
 pub use failures::{PyError, Traceback};
 
-mod pytest;
-pub use pytest::{Pytest, TestStatus};
+mod pytests;
+pub use pytests::{TestDetails, TestStatus};
 
 /// A suite of tests from a single python source file.
 ///
@@ -38,16 +38,16 @@ pub use pytest::{Pytest, TestStatus};
 pub struct TestSuite {
     src: String,
     /// indexed by test name, retains ordering from original python source
-    pub tests: IndexMap<String, Pytest>,
+    pub tests: IndexMap<String, TestDetails>,
 }
 
 impl TryFrom<String> for TestSuite {
     type Error = ParseError;
     fn try_from(src: String) -> Result<Self, Self::Error> {
-        let tests: IndexMap<String, Pytest> = parse_module(&src)?
+        let tests: IndexMap<String, TestDetails> = parse_module(&src)?
             .into_suite()
             .into_iter()
-            .filter_map(|stmt| -> Option<(String, Pytest)> {
+            .filter_map(|stmt| -> Option<(String, TestDetails)> {
                 match stmt {
                     Stmt::FunctionDef(function) if function.name.as_str().starts_with("test_") => {
                         Some((function.name.to_string(), function.into()))
