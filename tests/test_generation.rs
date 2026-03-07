@@ -60,7 +60,7 @@ mod basic {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.tests["test_passes"].report(&suite);
+        let report = suite.test("test_passes").unwrap().report();
         assert!(report.is_none());
     }
 
@@ -69,7 +69,7 @@ mod basic {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.tests["test_fails"].report(&suite).unwrap();
+        let report = suite.test("test_fails").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
     }
@@ -144,7 +144,7 @@ mod complex {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
         suite.update_status(ID, &stdout);
-        let report = suite.tests["test_seven_is_six"].report(&suite).unwrap();
+        let report = suite.test("test_seven_is_six").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_seven_is_six.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
     }

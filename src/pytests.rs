@@ -7,7 +7,15 @@ use ruff_python_ast::StmtFunctionDef;
 
 use crate::{Location, PyError, StringBuffer, TestSuite, Traceback, failures::TracebackLine};
 
-/// A single test. Does not store the original source text, only the AST.
+/// A single test, with references to the related test suite and the test details.
+#[derive(Debug, PartialEq)]
+pub struct PythonTest<'suite, 'details> {
+    pub full_src: &'suite str,
+    pub test_ast: &'details StmtFunctionDef,
+    pub status: &'details TestStatus,
+}
+
+/// Owned details of single test. Does not store the original source text, only the AST.
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
 #[derive(Debug, PartialEq)]
 pub struct TestDetails {
@@ -25,9 +33,25 @@ impl From<StmtFunctionDef> for TestDetails {
     }
 }
 
-impl TestDetails {
+impl PythonTest<'_, '_> {
+    /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
+    fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
+        let start_line = match start {
+            Location::Position(pos) => self.full_src[0..*pos].lines().count(),
+            Location::Line(_) => todo!(),
+        };
+        let end_line = match end {
+            Location::Position(_) => todo!(),
+            Location::Line(line) => *line - 1,
+        };
+        self.full_src
+            .lines()
+            .skip(start_line)
+            .take(end_line - start_line)
+    }
+
     /// Produce a test execution report.
-    pub fn report(&self, suite: &TestSuite) -> Option<String> {
+    pub fn report(&self) -> Option<String> {
         enum Prefix<'str> {
             LineNumber(&'str str),
             Indent(usize),
@@ -49,11 +73,11 @@ impl TestDetails {
 
                             let failure =
                                 Location::Line(usize::from_str(frameheader.line_number).unwrap());
-                            let testfn_def = Location::Position(self.ast.range.start().into());
+                            let testfn_def = Location::Position(self.test_ast.range.start().into());
                             let indent = frameheader.line_number.len() + 2;
 
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
-                            for line in suite.source(&testfn_def, &failure) {
+                            for line in self.source(&testfn_def, &failure) {
                                 frame_buf.push_line(indent, [line]);
                             }
 
