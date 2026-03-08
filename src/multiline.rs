@@ -83,10 +83,14 @@ pub(crate) struct NumberedLines<LineIterator> {
     line_number: usize,
 }
 
-impl<'a, LineIterator> Iterator for NumberedLines<LineIterator> 
-where LineIterator: Iterator<Item = &'a str> {
+impl<'a, LineIterator> Iterator for NumberedLines<LineIterator>
+where
+    LineIterator: Iterator<Item = &'a str>,
+{
+        self.line_number += 1;
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
+        self.line_number += 1;
         self.lines.next()
     }
 }
@@ -104,6 +108,8 @@ mod tests {
         let line2 = Location::Line(2);
         let text = text.as_str();
         let mut numbered_lines = text.lines_from(&line2);
-        assert_eq!("line 2", numbered_lines.next().unwrap())
+        assert_eq!(2, numbered_lines.line_number);
+        assert_eq!("line 2", numbered_lines.next().unwrap());
+        assert_eq!(3, numbered_lines.line_number);
     }
 }
