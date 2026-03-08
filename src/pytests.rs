@@ -8,7 +8,7 @@ use ruff_python_ast::StmtFunctionDef;
 use crate::{
     PyError, Traceback,
     failures::TracebackLine,
-    multiline::{Location, Multiline},
+    multiline::{Location, Multiline, MultilineMut},
 };
 
 /// A single test, with references to the full module source and the test details.

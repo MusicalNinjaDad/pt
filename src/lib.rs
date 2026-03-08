@@ -16,7 +16,7 @@ pub use pytests::{PythonTest, TestStatus};
 
 mod multiline;
 
-use crate::{multiline::Multiline, pytests::TestDetails};
+use crate::{multiline::MultilineMut, pytests::TestDetails};
 
 /// A suite of tests from a single python source file.
 ///

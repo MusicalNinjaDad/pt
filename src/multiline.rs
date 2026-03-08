@@ -7,35 +7,24 @@ use std::str::Lines;
 /// - Initialise with `let mut str_buf = String::(new);`
 /// - Reset (contents, not capacity) with `str_buf.clear();`
 /// - Extend with `push_...` functions
-#[allow(unused_variables)]
-pub(crate) trait Multiline {
+pub(crate) trait MultilineMut {
     /// `indent` with spaces, concatenate `contents`, end with `\n`
-    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>) {
-        unimplemented!()
-    }
+    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
     /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
     fn push_python_line<'strs>(
         &mut self,
         indent: usize,
         contents: impl IntoIterator<Item = &'strs str>,
-    ) {
-        unimplemented!()
-    }
-    fn push_newline(&mut self) {
-        unimplemented!()
-    }
+    );
+    fn push_newline(&mut self);
+}
+pub(crate) trait Multiline {
     // Iterator over lines including the one containing location
-    fn lines_from(&self, location: &Location) -> Lines {
-        unimplemented!()
-    }
+    fn lines_from(&self, location: &Location) -> Lines;
     /// Iterator over lines including the one containing location
-    fn lines_to(&self, location: &Location) -> Lines {
-        unimplemented!()
-    }
+    fn lines_to(&self, location: &Location) -> Lines;
     /// Get the line number of a given location
-    fn line_no(&self, location: &Location) -> usize {
-        unimplemented!()
-    }
+    fn line_no(&self, location: &Location) -> usize;
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -44,7 +33,7 @@ pub(crate) enum Location {
     Line(usize),
 }
 
-impl Multiline for String {
+impl MultilineMut for String {
     fn push_newline(&mut self) {
         self.push('\n');
     }
@@ -76,5 +65,11 @@ impl Multiline for &str {
             Location::Position(pos) => self[0..*pos].lines().count(),
             Location::Line(line) => *line,
         }
+    }
+    fn lines_from(&self, location: &Location) -> Lines {
+        todo!()
+    }
+    fn lines_to(&self, location: &Location) -> Lines {
+        todo!()
     }
 }
