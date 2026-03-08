@@ -20,7 +20,7 @@ pub(crate) trait MultilineMut {
 }
 pub(crate) trait Multiline {
     /// Iterator over lines including the one containing location
-    fn lines_from(&self, location: &Location) -> NumberedLines<Skip<Lines<'_>>>;
+    fn lines_from(&self, location: &Location) -> NumberedLines<impl Iterator<Item = &str>>;
     /// Iterator over lines including the one containing location
     fn lines_to(&self, location: &Location) -> Lines;
     /// Get the line number of a given location
@@ -66,9 +66,12 @@ impl Multiline for &str {
             Location::Line(line) => *line,
         }
     }
-    fn lines_from(&self, location: &Location) -> NumberedLines<Skip<Lines<'_>>> {
+    fn lines_from(&self, location: &Location) -> NumberedLines<impl Iterator<Item = &str>> {
         let lineno = self.line_no(location);
-        NumberedLines { lines: self.lines().skip(lineno - 1), line_number: lineno }
+        NumberedLines {
+            lines: self.lines().skip(lineno - 1),
+            line_number: lineno,
+        }
     }
     fn lines_to(&self, location: &Location) -> Lines {
         todo!()
