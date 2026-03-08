@@ -1,6 +1,6 @@
 //! Handling multi-line Strings
 
-use std::str::Lines;
+use std::{iter::Skip, path::Iter, str::Lines};
 
 /// For incrementally generating Strings.
 ///
@@ -19,8 +19,8 @@ pub(crate) trait MultilineMut {
     fn push_newline(&mut self);
 }
 pub(crate) trait Multiline {
-    // Iterator over lines including the one containing location
-    fn lines_from(&self, location: &Location) -> Lines;
+    /// Iterator over lines including the one containing location
+    fn lines_from(&self, location: &Location) -> NumberedLines<Skip<Lines<'_>>>;
     /// Iterator over lines including the one containing location
     fn lines_to(&self, location: &Location) -> Lines;
     /// Get the line number of a given location
@@ -66,10 +66,41 @@ impl Multiline for &str {
             Location::Line(line) => *line,
         }
     }
-    fn lines_from(&self, location: &Location) -> Lines {
-        todo!()
+    fn lines_from(&self, location: &Location) -> NumberedLines<Skip<Lines<'_>>> {
+        let lineno = self.line_no(location);
+        NumberedLines { lines: self.lines().skip(lineno - 1), line_number: lineno }
     }
     fn lines_to(&self, location: &Location) -> Lines {
         todo!()
+    }
+}
+
+pub(crate) struct NumberedLines<LineIterator> {
+    lines: LineIterator,
+    line_number: usize,
+}
+
+impl<'a, LineIterator> Iterator for NumberedLines<LineIterator> 
+where LineIterator: Iterator<Item = &'a str> {
+    type Item = &'a str;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.lines.next()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lines_from() {
+        let mut text = String::new();
+        text.push_line(0, ["line 1"]);
+        text.push_line(0, ["line 2"]);
+        text.push_line(0, ["line 3"]);
+        let line2 = Location::Line(2);
+        let text = text.as_str();
+        let mut numbered_lines = text.lines_from(&line2);
+        assert_eq!("line 2", numbered_lines.next().unwrap())
     }
 }
