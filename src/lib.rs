@@ -14,6 +14,8 @@ pub use failures::{PyError, Traceback};
 mod pytests;
 pub use pytests::{PythonTest, TestStatus};
 
+mod multiline;
+
 use crate::pytests::TestDetails;
 
 /// A suite of tests from a single python source file.
@@ -191,12 +193,6 @@ impl StringBuffer for String {
     ) {
         self.push_line(4 * indent, contents);
     }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Location {
-    Position(usize),
-    Line(usize),
 }
 
 #[cfg(test)]

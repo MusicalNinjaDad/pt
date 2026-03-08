@@ -5,7 +5,11 @@ use std::str::FromStr;
 use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
-use crate::{Location, PyError, StringBuffer, Traceback, failures::TracebackLine};
+use crate::{
+    PyError, Traceback,
+    failures::TracebackLine,
+    multiline::{Location, Multiline},
+};
 
 /// A single test, with references to the full module source and the test details.
 #[derive(Debug, PartialEq)]
@@ -37,14 +41,8 @@ impl From<StmtFunctionDef> for TestDetails {
 impl PythonTest<'_, '_, '_> {
     /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
     fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
-        let start_line = match start {
-            Location::Position(pos) => self.full_src[0..*pos].lines().count(),
-            Location::Line(_) => todo!(),
-        };
-        let end_line = match end {
-            Location::Position(_) => todo!(),
-            Location::Line(line) => *line - 1,
-        };
+        let start_line = self.full_src.line_no(start);
+        let end_line = self.full_src.line_no(end) - 1;
         self.full_src
             .lines()
             .skip(start_line)
