@@ -11,15 +11,6 @@ use crate::{
     multiline::{Location, Multiline, MultilineMut},
 };
 
-/// A single test, with references to the full module source and the test details.
-#[derive(Debug, PartialEq)]
-pub struct PythonTest<'name, 'suite, 'details> {
-    pub testname: &'name str,
-    pub full_src: &'suite str,
-    pub test_ast: &'details StmtFunctionDef,
-    pub status: &'details TestStatus,
-}
-
 /// Owned details of single test. Does not store the original source text, only the AST.
 /// Construct with `Pytest::from(ruff_python_ast::StmtFunctionDef)`
 #[derive(Debug, PartialEq)]
@@ -36,6 +27,15 @@ impl From<StmtFunctionDef> for TestDetails {
             status: Default::default(),
         }
     }
+}
+
+/// A single test, with references to the full module source and the test details.
+#[derive(Debug, PartialEq)]
+pub struct PythonTest<'name, 'suite, 'details> {
+    pub testname: &'name str,
+    pub full_src: &'suite str,
+    pub test_ast: &'details StmtFunctionDef,
+    pub status: &'details TestStatus,
 }
 
 impl PythonTest<'_, '_, '_> {
