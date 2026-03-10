@@ -41,8 +41,6 @@ impl From<StmtFunctionDef> for TestDetails {
 impl PythonTest<'_, '_, '_> {
     /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
     fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
-        let start_line = self.full_src.line_no(start);
-        let end_line = self.full_src.line_no(end) - 1;
         self.full_src.lines_from(start).lines_to(end)
     }
 
@@ -69,7 +67,7 @@ impl PythonTest<'_, '_, '_> {
 
                             let failure =
                                 Location::Line(usize::from_str(frameheader.line_number).unwrap());
-                            let testfn_def = Location::Position(self.test_ast.range.start().into());
+                            let testfn_def = Location::Offset(self.test_ast.range.start().into());
                             let indent = frameheader.line_number.len() + 2;
 
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);

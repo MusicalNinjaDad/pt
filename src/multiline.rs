@@ -2,9 +2,11 @@
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Location {
-    Position(usize),
+    Char(usize),
     Line(usize),
+    Offset(usize),
 }
+
 /// For incrementally generating Strings.
 ///
 /// - Initialise with `let mut str_buf = String::(new);`
@@ -58,13 +60,17 @@ pub(crate) trait Multiline {
 impl Multiline for &str {
     fn line_no(&self, location: &Location) -> usize {
         match location {
-            Location::Position(pos) => {
+            Location::Char(pos) => {
                 self.chars().take(*pos - 1).fold(1, |mut linecount, char| {
                     if char == '\n' {
                         linecount += 1;
                     }
                     linecount
                 })
+            }
+            Location::Offset(pos) => {
+                // Not safe to index to (*pos + 1) as this may not be a valid UTF-8 char boundary
+                self[..*pos].lines().count() + 1
             }
             Location::Line(line) => *line,
         }
@@ -154,9 +160,9 @@ mod tests {
         text.push_line(0, ["line 1"]);
         text.push_line(0, ["line 2"]);
         text.push_line(0, ["line 3"]);
-        let end_of_line_1 = Location::Position(7);
+        let end_of_line_1 = Location::Char(7);
         assert_eq!(1, text.as_str().line_no(&end_of_line_1));
-        let start_of_line_2 = Location::Position(8);
+        let start_of_line_2 = Location::Char(8);
         assert_eq!(2, text.as_str().line_no(&start_of_line_2));
     }
 }
