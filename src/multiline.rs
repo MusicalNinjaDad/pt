@@ -105,6 +105,7 @@ impl<'a, LineIterator> NumberedLines<LineIterator>
 where
     LineIterator: Iterator<Item = &'a str>,
 {
+    /// Iterator over lines up to and *excluding* 'location'
     pub(crate) fn lines_to(
         self,
         location: &Location,
@@ -113,7 +114,7 @@ where
             todo!("Cannot lines_to a position")
         };
         NumberedLines {
-            lines: self.lines.take(end_line - self.line_number + 1),
+            lines: self.lines.take(end_line - self.line_number),
             line_number: self.line_number,
         }
     }
@@ -145,9 +146,9 @@ mod tests {
         text.push_line(0, ["line 3"]);
         text.push_line(0, ["line 4"]);
         let line2 = Location::Line(2);
-        let line3 = Location::Line(3);
+        let line4 = Location::Line(4);
         let text = text.as_str();
-        let mut numbered_lines = text.lines_from(&line2).lines_to(&line3);
+        let mut numbered_lines = text.lines_from(&line2).lines_to(&line4);
         assert_eq!(2, numbered_lines.line_number);
         assert_eq!("line 2", numbered_lines.next().unwrap());
         assert_eq!(3, numbered_lines.line_number);
