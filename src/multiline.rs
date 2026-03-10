@@ -1,5 +1,10 @@
 //! Handling multi-line Strings
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum Location {
+    Position(usize),
+    Line(usize),
+}
 /// For incrementally generating Strings.
 ///
 /// - Initialise with `let mut str_buf = String::(new);`
@@ -15,18 +20,6 @@ pub(crate) trait MultilineMut {
         contents: impl IntoIterator<Item = &'strs str>,
     );
     fn push_newline(&mut self);
-}
-pub(crate) trait Multiline {
-    /// Iterator over lines including the one containing location
-    fn lines_from(&self, location: &Location) -> NumberedLines<impl Iterator<Item = &str>>;
-    /// Get the line number of a given location
-    fn line_no(&self, location: &Location) -> usize;
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum Location {
-    Position(usize),
-    Line(usize),
 }
 
 impl MultilineMut for String {
@@ -55,6 +48,13 @@ impl MultilineMut for String {
     }
 }
 
+/// For reading multiline Strings
+pub(crate) trait Multiline {
+    /// Iterator over lines including the one containing location
+    fn lines_from(&self, location: &Location) -> NumberedLines<impl Iterator<Item = &str>>;
+    /// Get the line number of a given location
+    fn line_no(&self, location: &Location) -> usize;
+}
 impl Multiline for &str {
     fn line_no(&self, location: &Location) -> usize {
         match location {
@@ -77,6 +77,7 @@ impl Multiline for &str {
     }
 }
 
+/// Iterator adaptor that keeps track of current line number
 pub(crate) struct NumberedLines<LineIterator> {
     lines: LineIterator,
     line_number: usize,
