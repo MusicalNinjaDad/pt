@@ -62,7 +62,13 @@ impl MultilineMut for String {
 impl Multiline for &str {
     fn line_no(&self, location: &Location) -> usize {
         match location {
-            Location::Position(pos) => self[0..*pos].lines().count(),
+            Location::Position(pos) => {
+                let mut chars = self.chars();
+                for _ in 0..*pos {
+                    chars.next();
+                }
+                chars.as_str().lines().count()
+            }
             Location::Line(line) => *line,
         }
     }
