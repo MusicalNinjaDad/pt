@@ -1,6 +1,8 @@
-use crate::PyError;
+//! Parsing and storing the output from failed tests
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+use base_traits::AsStr;
+
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
     text: String,
 }
@@ -11,21 +13,29 @@ impl From<String> for Traceback {
     }
 }
 
-impl Traceback {
-    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TbLine<'_>> {
-        self.text.lines().map(TbLine::from)
+impl From<&str> for Traceback {
+    fn from(text: &str) -> Self {
+        Self {
+            text: text.to_string(),
+        }
     }
 }
 
-#[derive(Debug)]
-pub(crate) enum TbLine<'line> {
+impl Traceback {
+    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TracebackLine<'_>> {
+        self.text.lines().map(TracebackLine::from)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum TracebackLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
     FrameContents { text: &'line str },
     Exception(PyError),
 }
 
-impl<'line> From<&'line str> for TbLine<'line> {
+impl<'line> From<&'line str> for TracebackLine<'line> {
     fn from(line: &'line str) -> Self {
         match line.split_whitespace().next() {
             Some("Traceback") => Self::TracebackHeader,
@@ -41,7 +51,7 @@ impl<'line> From<&'line str> for TbLine<'line> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct FrameHeader<'line> {
     file_name: &'line str,
     pub(crate) function_name: &'line str,
@@ -58,6 +68,31 @@ impl<'line> From<&'line str> for FrameHeader<'line> {
             file_name,
             function_name,
             line_number,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PyError {
+    AssertionError,
+    Other,
+}
+
+impl AsStr for PyError {
+    fn as_str(&self) -> &str {
+        match self {
+            Self::AssertionError => "AssertionError",
+            Self::Other => todo!(),
+        }
+    }
+}
+
+impl From<&str> for PyError {
+    fn from(traceback: &str) -> Self {
+        let lastline = traceback.lines().last().unwrap();
+        match lastline {
+            "AssertionError" => Self::AssertionError,
+            _ => Self::Other,
         }
     }
 }

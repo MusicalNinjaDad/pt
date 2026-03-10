@@ -14,27 +14,42 @@ env:
     RUSTC_BOOTSTRAP: 1
 
 jobs:
-  test:
+
+  skip_check:
     runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5.3.1
+        with:
+          concurrent_skipping: 'same_content_newer'
+
+  test:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
+
+    runs-on: ubuntu-latest
+    
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: 3.13
-    - name: Build
-      run: cargo build --verbose
     - name: Run tests Python 3.13
-      run: python -V && cargo test --verbose
+      run: python -V && cargo test
     - uses: actions/setup-python@v6
       with:
         python-version: "3.x"
     - name: Run tests Python latest
-      run: python -V && cargo test --verbose
-
-
+      run: python -V && cargo test
 
   lint:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
+
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v6
     - name: fmt
