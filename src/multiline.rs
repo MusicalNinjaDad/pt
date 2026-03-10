@@ -59,11 +59,12 @@ impl Multiline for &str {
     fn line_no(&self, location: &Location) -> usize {
         match location {
             Location::Position(pos) => {
-                let mut chars = self.chars();
-                for _ in 0..*pos {
-                    chars.next();
-                }
-                chars.as_str().lines().count()
+                self.chars().take(*pos - 1).fold(1, |mut linecount, char| {
+                    if char == '\n' {
+                        linecount += 1;
+                    }
+                    linecount
+                })
             }
             Location::Line(line) => *line,
         }
@@ -98,7 +99,10 @@ impl<'a, LineIterator> NumberedLines<LineIterator>
 where
     LineIterator: Iterator<Item = &'a str>,
 {
-    pub(crate) fn lines_to(self, location: &Location) -> NumberedLines<impl Iterator<Item = &'a str>> {
+    pub(crate) fn lines_to(
+        self,
+        location: &Location,
+    ) -> NumberedLines<impl Iterator<Item = &'a str>> {
         let Location::Line(end_line) = location else {
             todo!("Cannot lines_to a position")
         };
@@ -143,5 +147,16 @@ mod tests {
         assert_eq!(3, numbered_lines.line_number);
         assert_eq!("line 3", numbered_lines.next().unwrap());
         assert!(numbered_lines.next().is_none());
+    }
+    #[test]
+    fn line_no() {
+        let mut text = String::new();
+        text.push_line(0, ["line 1"]);
+        text.push_line(0, ["line 2"]);
+        text.push_line(0, ["line 3"]);
+        let end_of_line_1 = Location::Position(7);
+        assert_eq!(1, text.as_str().line_no(&end_of_line_1));
+        let start_of_line_2 = Location::Position(8);
+        assert_eq!(2, text.as_str().line_no(&start_of_line_2));
     }
 }
