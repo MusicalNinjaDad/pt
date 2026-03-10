@@ -2,6 +2,7 @@
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Location {
+    #[allow(unused)]
     Char(usize),
     Line(usize),
     Offset(usize),
