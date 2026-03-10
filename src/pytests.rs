@@ -39,11 +39,6 @@ impl From<StmtFunctionDef> for TestDetails {
 }
 
 impl PythonTest<'_, '_, '_> {
-    /// Returns an Iterator over the lines from `start` (inclusive) to `end` (exclusive)
-    fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
-        self.full_src.lines_from(start).lines_to(end)
-    }
-
     /// Produce a test execution report.
     pub fn report(&self) -> Option<String> {
         enum Prefix<'str> {
@@ -71,9 +66,10 @@ impl PythonTest<'_, '_, '_> {
                             let indent = frameheader.line_number.len() + 2;
 
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
-                            for line in self.source(&testfn_def, &failure) {
-                                frame_buf.push_line(indent, [line]);
-                            }
+                            self.full_src
+                                .lines_from(&testfn_def)
+                                .lines_to(&failure)
+                                .for_each(|line| frame_buf.push_line(indent, [line]));
 
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
