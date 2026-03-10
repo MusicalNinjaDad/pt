@@ -83,7 +83,10 @@ impl Multiline for &str {
     }
 }
 
-/// Iterator adaptor that keeps track of current line number
+/// Iterator adaptor that keeps track of current line number.
+/// **Note:** `line_number` will increment with each call to `.next()`:
+///   - for a *fused* `LineIterator`: `line_number` will be (line count + 1) after exhaustion
+///   - for a *not fused* `LineIterator`: `line_number` will include `None` lines
 pub(crate) struct NumberedLines<LineIterator> {
     lines: LineIterator,
     line_number: usize,
@@ -94,6 +97,9 @@ where
     LineIterator: Iterator<Item = &'a str>,
 {
     type Item = &'a str;
+    /// **Note:** `line_number` will increment with each call to `.next()`:
+    ///   - for a *fused* `LineIterator`: `line_number` will be (line count + 1) after exhaustion
+    ///   - for a *not fused* `LineIterator`: `line_number` will include `None` lines
     fn next(&mut self) -> Option<Self::Item> {
         self.line_number += 1;
         self.lines.next()
