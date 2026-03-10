@@ -14,7 +14,9 @@ pub use failures::{PyError, Traceback};
 mod pytests;
 pub use pytests::{PythonTest, TestStatus};
 
-use crate::pytests::TestDetails;
+mod multiline;
+
+use crate::{multiline::MultilineMut, pytests::TestDetails};
 
 /// A suite of tests from a single python source file.
 ///
@@ -148,55 +150,6 @@ impl TestSuite {
         summary.push_str(&details);
         summary
     }
-}
-
-/// For incrementally generating Strings.
-///
-/// - Initialise with `let mut str_buf = String::(new);`
-/// - Reset (contents, not capacity) with `str_buf.clear();`
-/// - Extend with `push_...` functions
-trait StringBuffer {
-    /// `indent` with spaces, concatenate `contents`, end with `\n`
-    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
-    /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
-    fn push_python_line<'strs>(
-        &mut self,
-        indent: usize,
-        contents: impl IntoIterator<Item = &'strs str>,
-    );
-    fn push_newline(&mut self);
-}
-
-impl StringBuffer for String {
-    fn push_newline(&mut self) {
-        self.push('\n');
-    }
-
-    /// `indent` with spaces, concatenate `contents`, end with `\n`
-    fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>) {
-        for _ in 0..indent {
-            self.push(' ');
-        }
-        for text in contents {
-            self.push_str(text);
-        }
-        self.push_newline();
-    }
-
-    /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
-    fn push_python_line<'strs>(
-        &mut self,
-        indent: usize,
-        contents: impl IntoIterator<Item = &'strs str>,
-    ) {
-        self.push_line(4 * indent, contents);
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum Location {
-    Position(usize),
-    Line(usize),
 }
 
 #[cfg(test)]
