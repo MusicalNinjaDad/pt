@@ -14,6 +14,7 @@ pub(crate) enum Location {
 /// - Reset (contents, not capacity) with `str_buf.clear();`
 /// - Extend with `push_...` functions
 pub(crate) trait MultilineMut {
+    fn push_newline(&mut self);
     /// `indent` with spaces, concatenate `contents`, end with `\n`
     fn push_line<'strs>(&mut self, indent: usize, contents: impl IntoIterator<Item = &'strs str>);
     /// `indent` with 4 x n spaces, concatenate `contents`, end with `\n`
@@ -22,7 +23,6 @@ pub(crate) trait MultilineMut {
         indent: usize,
         contents: impl IntoIterator<Item = &'strs str>,
     );
-    fn push_newline(&mut self);
 }
 
 impl MultilineMut for String {
