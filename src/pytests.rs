@@ -43,7 +43,7 @@ impl PythonTest<'_, '_, '_> {
     fn source(&self, start: &Location, end: &Location) -> impl Iterator<Item = &str> {
         let start_line = self.full_src.line_no(start);
         let end_line = self.full_src.line_no(end) - 1;
-        self.full_src.lines_from(start).take(end_line - start_line)
+        self.full_src.lines_from(start).lines_to(end)
     }
 
     /// Produce a test execution report.
