@@ -1,7 +1,5 @@
 //! Handling multi-line Strings
 
-use std::{iter::Skip, path::Iter, str::Lines};
-
 /// For incrementally generating Strings.
 ///
 /// - Initialise with `let mut str_buf = String::(new);`
@@ -21,8 +19,6 @@ pub(crate) trait MultilineMut {
 pub(crate) trait Multiline {
     /// Iterator over lines including the one containing location
     fn lines_from(&self, location: &Location) -> NumberedLines<impl Iterator<Item = &str>>;
-    /// Iterator over lines including the one containing location
-    fn lines_to(&self, location: &Location) -> Lines;
     /// Get the line number of a given location
     fn line_no(&self, location: &Location) -> usize;
 }
@@ -79,9 +75,6 @@ impl Multiline for &str {
             line_number: lineno,
         }
     }
-    fn lines_to(&self, location: &Location) -> Lines {
-        todo!()
-    }
 }
 
 pub(crate) struct NumberedLines<LineIterator> {
@@ -93,11 +86,25 @@ impl<'a, LineIterator> Iterator for NumberedLines<LineIterator>
 where
     LineIterator: Iterator<Item = &'a str>,
 {
-        self.line_number += 1;
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
         self.line_number += 1;
         self.lines.next()
+    }
+}
+
+impl<'a, LineIterator> NumberedLines<LineIterator>
+where
+    LineIterator: Iterator<Item = &'a str>,
+{
+    pub(crate) fn lines_to(self, location: &Location) -> NumberedLines<impl Iterator<Item = &'a str>> {
+        let Location::Line(end_line) = location else {
+            todo!("Cannot lines_to a position")
+        };
+        NumberedLines {
+            lines: self.lines.take(end_line - self.line_number + 1),
+            line_number: self.line_number,
+        }
     }
 }
 
@@ -117,5 +124,23 @@ mod tests {
         assert_eq!(2, numbered_lines.line_number);
         assert_eq!("line 2", numbered_lines.next().unwrap());
         assert_eq!(3, numbered_lines.line_number);
+    }
+
+    #[test]
+    fn lines_to() {
+        let mut text = String::new();
+        text.push_line(0, ["line 1"]);
+        text.push_line(0, ["line 2"]);
+        text.push_line(0, ["line 3"]);
+        text.push_line(0, ["line 4"]);
+        let line2 = Location::Line(2);
+        let line3 = Location::Line(3);
+        let text = text.as_str();
+        let mut numbered_lines = text.lines_from(&line2).lines_to(&line3);
+        assert_eq!(2, numbered_lines.line_number);
+        assert_eq!("line 2", numbered_lines.next().unwrap());
+        assert_eq!(3, numbered_lines.line_number);
+        assert_eq!("line 3", numbered_lines.next().unwrap());
+        assert!(numbered_lines.next().is_none());
     }
 }
