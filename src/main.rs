@@ -3,7 +3,7 @@ use std::{
     convert::Infallible,
     env, fs, io,
     path::PathBuf,
-    process::{Command, ExitCode, exit},
+    process::{Command, ExitCode},
     string::FromUtf8Error,
 };
 
