@@ -1,3 +1,5 @@
+/// Test cases making use of `tests/fixtures/**` - Single create, multiple modules to avoid
+/// sequential execution. (cargo test executs _tests_ in parallel but for each _crate_ sequentially)
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -56,15 +58,6 @@ mod basic {
     }
 
     #[test]
-    fn assertion_rewrite_test_passes() {
-        let mut suite = load_src(&FIXTURES);
-        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
-        let report = suite.test("test_passes").unwrap().report();
-        assert!(report.is_none());
-    }
-
-    #[test]
     fn assertion_rewrite_test_fails() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
@@ -90,6 +83,7 @@ mod basic {
         pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
         let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         pt_cmd.assert().stdout(eq(expected_stdout));
+        pt_cmd.assert().code(1);
     }
 }
 
@@ -165,5 +159,102 @@ mod complex {
         pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
         let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         pt_cmd.assert().stdout(eq(expected_stdout));
+        pt_cmd.assert().code(1);
+    }
+}
+
+mod pass {
+    use std::sync::LazyLock;
+
+    use super::*;
+    static ID: &str = "UID";
+    static FIXTURES: LazyLock<PathBuf> = LazyLock::new(|| PathBuf::from("./tests/fixtures/pass"));
+
+    #[test]
+    fn suite_from_src() {
+        let suite = load_src(&FIXTURES);
+        assert_eq!(1, suite.tests().collect::<Vec<_>>().len());
+    }
+
+    #[test]
+    fn runner() {
+        let suite = load_src(&FIXTURES);
+        let expected_runner = fs::read_to_string(FIXTURES.join("run.py")).unwrap();
+        assert_eq!(expected_runner, suite.runner(ID));
+    }
+
+    #[test]
+    fn parse_status() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        assert!(matches!(
+            &suite.test("test_passes").unwrap().status,
+            TestStatus::Pass
+        ));
+    }
+
+    #[test]
+    fn assertion_rewrite_test_passes() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.test("test_passes").unwrap().report();
+        assert!(report.is_none());
+    }
+
+    #[test]
+    fn summary_report() {
+        let mut suite = load_src(&FIXTURES);
+        let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
+        suite.update_status(ID, &stdout);
+        let report = suite.summary_report();
+        let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        assert_eq!(expect_rpt, report);
+    }
+
+    #[test]
+    fn cli() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
+        let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
+        pt_cmd.assert().stdout(eq(expected_stdout));
+        pt_cmd.assert().code(0);
+    }
+}
+
+mod exitcodes {
+    use predicates::str::contains;
+
+    use super::*;
+
+    #[test]
+    fn invalid_src() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(PathBuf::from("./tests/fixtures/basic/stdout.out"));
+        pt_cmd.assert().code(3);
+        pt_cmd.assert().stderr(contains(
+            "Error parsing \"./tests/fixtures/basic/stdout.out\": ",
+        ));
+    }
+
+    #[test]
+    fn file_not_found() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(PathBuf::from("./tests/fixtures/no"));
+        pt_cmd.assert().code(3);
+        pt_cmd.assert().stderr(contains("./tests/fixtures/no"));
+        pt_cmd
+            .assert()
+            .stderr(contains("No such file or directory"));
+    }
+
+    #[test]
+    fn no_file_specified() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.assert().code(4);
+        pt_cmd
+            .assert()
+            .stderr(contains("Please provide a file to test"));
     }
 }
