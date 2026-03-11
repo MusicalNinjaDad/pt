@@ -10,7 +10,9 @@ fn main() -> ExitCode {
     let id = "PT_CLI";
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
     let src = fs::read_to_string(src_path).unwrap();
-    let Ok(mut suite) = TestSuite::try_from(src) else {return ExitCode::from(3);};
+    let Ok(mut suite) = TestSuite::try_from(src) else {
+        return ExitCode::from(3);
+    };
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
