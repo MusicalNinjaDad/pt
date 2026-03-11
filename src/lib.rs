@@ -4,14 +4,6 @@
 //! report / code generation.
 //!
 //! Main entry point is `TestSuite`
-use core::ops::{ControlFlow, Try};
-use std::{
-    convert,
-    io::{Write, stderr},
-    ops::FromResidual,
-    process::{ExitCode, Termination},
-};
-
 use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::Stmt;
@@ -158,90 +150,6 @@ impl TestSuite {
         }
         summary.push_str(&details);
         summary
-    }
-}
-
-/// Custom Error type allowing for conversion to specific ExitCodes via
-/// `impl From<PtError> for ExitCode`
-#[derive(Debug, Clone, PartialEq)]
-pub enum PtError {
-    ParseError(ParseError),
-}
-
-impl From<ParseError> for PtError {
-    fn from(err: ParseError) -> Self {
-        PtError::ParseError(err)
-    }
-}
-
-/// Where the ExitCode mapping **AND custom output** parts of the magic happens
-///
-/// **Note: Side Effects** This conversion _will_ produce any side effects which are wanted as
-/// part of handling termination on this Error. It should not usually be called directly, only
-/// via `Termination::report()`
-impl From<PtError> for ExitCode {
-    fn from(err: PtError) -> Self {
-        match err {
-            PtError::ParseError(err) => {
-                // io::attempt_print_to_stderr is not public,
-                // eprintln! will panic if stderr is blocked, so do this manually ...
-                _ = stderr().write_fmt(format_args!("Error parsing python source: {err}"));
-                ExitCode::from(3)
-            }
-        }
-    }
-}
-
-/// Custom Result type with conversion from Result<_, PtError> and `Termination` handling `ExitCode`
-pub enum PtResult<T> {
-    Ok(T),
-    Err(PtError),
-}
-
-/// Boilerplate
-impl<T> Try for PtResult<T> {
-    type Output = T;
-
-    type Residual = PtResult<convert::Infallible>;
-
-    fn from_output(output: Self::Output) -> Self {
-        PtResult::Ok(output)
-    }
-
-    fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
-        match self {
-            Self::Ok(v) => ControlFlow::Continue(v),
-            Self::Err(e) => ControlFlow::Break(PtResult::Err(e)),
-        }
-    }
-}
-
-/// Boilerplate
-impl<T> FromResidual<PtResult<std::convert::Infallible>> for PtResult<T> {
-    fn from_residual(residual: PtResult<std::convert::Infallible>) -> Self {
-        match residual {
-            PtResult::Err(err) => PtResult::Err(err),
-        }
-    }
-}
-
-/// Boilerplate to alllow traits such as `TryFrom` to require return types `Result<_, PtError>`
-impl<T> FromResidual<std::result::Result<std::convert::Infallible, PtError>> for PtResult<T> {
-    fn from_residual(residual: std::result::Result<std::convert::Infallible, PtError>) -> Self {
-        match residual {
-            Err(e) => PtResult::Err(e),
-        }
-    }
-}
-
-/// The magic to actually perform the custom ExitCode conversion
-impl<T: Termination> Termination for PtResult<T> {
-    fn report(self) -> ExitCode {
-        match self {
-            // Use stdlib implementations for allowed Ok returns
-            PtResult::Ok(ok) => ok.report(),
-            PtResult::Err(err) => ExitCode::from(err),
-        }
     }
 }
 
