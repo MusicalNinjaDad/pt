@@ -30,9 +30,9 @@ fn main() -> Exit<()> {
 
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
-    
+
     let python_output = String::from_utf8(runner.output()?.stdout)?;
-    
+
     suite.update_status(id, &python_output);
     print!("{}", suite.summary_report());
     Exit::from(suite)
