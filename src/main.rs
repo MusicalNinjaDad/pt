@@ -1,18 +1,17 @@
 use std::{
     env, fs,
     path::PathBuf,
-    process::{Command, ExitCode},
+    process::{Command, exit},
 };
 
+use pt::PtResult::{self, *};
 use pt::{TestStatus, TestSuite};
 
-fn main() -> ExitCode {
+fn main() -> PtResult<()> {
     let id = "PT_CLI";
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
     let src = fs::read_to_string(src_path).unwrap();
-    let Ok(mut suite) = TestSuite::try_from(src) else {
-        return ExitCode::from(3);
-    };
+    let mut suite = TestSuite::try_from(src)?;
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
@@ -23,9 +22,9 @@ fn main() -> ExitCode {
         .tests()
         .any(|test| matches!(test.status, TestStatus::Fail(_, _)))
     {
-        return ExitCode::from(1);
+        exit(1);
     };
-    ExitCode::SUCCESS
+    Ok(())
 }
 
 // Pytest exit codes:

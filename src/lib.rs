@@ -1,8 +1,16 @@
 #![feature(if_let_guard)]
+#![feature(try_trait_v2)]
 //! All core `pt` functionality ìs available as a library. This primarily consists of parsing and
 //! report / code generation.
 //!
 //! Main entry point is `TestSuite`
+use core::ops::{ControlFlow, Try};
+use std::{
+    convert,
+    ops::FromResidual,
+    process::{ExitCode, Termination},
+};
+
 use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::Stmt;
@@ -46,7 +54,7 @@ pub struct TestSuite {
 }
 
 impl TryFrom<String> for TestSuite {
-    type Error = ParseError;
+    type Error = PtError;
     fn try_from(src: String) -> Result<Self, Self::Error> {
         let tests: IndexMap<String, TestDetails> = parse_module(&src)?
             .into_suite()
@@ -149,6 +157,72 @@ impl TestSuite {
         }
         summary.push_str(&details);
         summary
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PtError {
+    ParseError(ParseError),
+}
+
+impl From<ParseError> for PtError {
+    fn from(err: ParseError) -> Self {
+        PtError::ParseError(err)
+    }
+}
+
+impl From<PtError> for ExitCode {
+    fn from(err: PtError) -> Self {
+        match err {
+            PtError::ParseError(_) => ExitCode::from(3),
+        }
+    }
+}
+
+pub enum PtResult<T> {
+    Ok(T),
+    Err(PtError),
+}
+
+impl<T> Try for PtResult<T> {
+    type Output = T;
+
+    type Residual = PtResult<convert::Infallible>;
+
+    fn from_output(output: Self::Output) -> Self {
+        PtResult::Ok(output)
+    }
+
+    fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
+        match self {
+            Self::Ok(v) => ControlFlow::Continue(v),
+            Self::Err(e) => ControlFlow::Break(PtResult::Err(e)),
+        }
+    }
+}
+
+impl<T> FromResidual<PtResult<std::convert::Infallible>> for PtResult<T> {
+    fn from_residual(residual: PtResult<std::convert::Infallible>) -> Self {
+        match residual {
+            PtResult::Err(err) => PtResult::Err(err),
+        }
+    }
+}
+
+impl<T> FromResidual<std::result::Result<std::convert::Infallible, PtError>> for PtResult<T> {
+    fn from_residual(residual: std::result::Result<std::convert::Infallible, PtError>) -> Self {
+        match residual {
+            Err(e) => PtResult::Err(e),
+        }
+    }
+}
+
+impl<T> Termination for PtResult<T> {
+    fn report(self) -> ExitCode {
+        match self {
+            PtResult::Ok(_) => ExitCode::SUCCESS,
+            PtResult::Err(err) => ExitCode::from(err),
+        }
     }
 }
 
