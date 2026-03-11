@@ -1,6 +1,9 @@
 #![feature(try_trait_v2)]
 use std::{
-    convert::Infallible, env, fs, path::PathBuf, process::{Command, ExitCode, exit}
+    convert::Infallible,
+    env, fs,
+    path::PathBuf,
+    process::{Command, ExitCode, exit},
 };
 
 use core::ops::{ControlFlow, Try};
@@ -79,7 +82,9 @@ impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
 }
 
 /// Boilerplate Conversion
-impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>> for Exit<T> {
+impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>>
+    for Exit<T>
+{
     fn from_residual(residual: std::result::Result<Infallible, E>) -> Self {
         match residual {
             Result::Err(e) => e.into(),
@@ -91,7 +96,7 @@ impl<T: Termination> Termination for Exit<T> {
     fn report(self) -> ExitCode {
         match self {
             Exit::Ok(ok) => ok.report(),
-            Exit::Err(code, msg ) => {
+            Exit::Err(code, msg) => {
                 _ = stderr().write(msg.as_bytes());
                 code
             }
@@ -101,6 +106,9 @@ impl<T: Termination> Termination for Exit<T> {
 
 impl<T: Termination> From<ParseError> for Exit<T> {
     fn from(err: ParseError) -> Self {
-        Self::Err(ExitCode::from(3), format!("Error parsing python source: {err}"))
+        Self::Err(
+            ExitCode::from(3),
+            format!("Error parsing python source: {err}"),
+        )
     }
 }
