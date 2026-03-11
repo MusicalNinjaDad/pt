@@ -1,6 +1,5 @@
 /// Test cases making use of `tests/fixtures/**` - Single create, multiple modules to avoid
 /// sequential execution. (cargo test executs _tests_ in parallel but for each _crate_ sequentially)
-
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -165,7 +164,7 @@ mod complex {
 }
 
 mod pass {
-        use std::sync::LazyLock;
+    use std::sync::LazyLock;
 
     use super::*;
     static ID: &str = "UID";
