@@ -55,7 +55,7 @@ pub struct TestSuite {
 }
 
 impl TryFrom<String> for TestSuite {
-    type Error = PtError;
+    type Error = ParseError;
     fn try_from(src: String) -> Result<Self, Self::Error> {
         let tests: IndexMap<String, TestDetails> = parse_module(&src)?
             .into_suite()

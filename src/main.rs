@@ -1,13 +1,19 @@
+#![feature(try_trait_v2)]
 use std::{
-    env, fs,
-    path::PathBuf,
-    process::{Command, exit},
+    convert::Infallible, env, fs, path::PathBuf, process::{Command, ExitCode, exit}
 };
 
-use pt::PtResult::{self, *};
-use pt::{TestStatus, TestSuite};
+use core::ops::{ControlFlow, Try};
+use std::{
+    io::{Write, stderr},
+    ops::FromResidual,
+    process::Termination,
+};
 
-fn main() -> PtResult<()> {
+use pt::{TestStatus, TestSuite};
+use ruff_python_parser::ParseError;
+
+fn main() -> Exit<()> {
     let id = "PT_CLI";
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
     let src = fs::read_to_string(src_path).unwrap();
@@ -23,7 +29,7 @@ fn main() -> PtResult<()> {
     {
         exit(1);
     };
-    Ok(())
+    Exit::Ok(())
 }
 
 // Pytest exit codes:
@@ -39,3 +45,62 @@ fn main() -> PtResult<()> {
 //   pytest command line usage error
 //  Exit code 5:
 //   No tests were collected
+
+enum Exit<T: Termination> {
+    Ok(T),
+    Err(ExitCode, String),
+}
+
+/// Boilerplate
+impl<T: Termination> Try for Exit<T> {
+    type Output = T;
+
+    type Residual = Exit<Infallible>;
+
+    fn from_output(output: Self::Output) -> Self {
+        Self::Ok(output)
+    }
+
+    fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
+        match self {
+            Self::Ok(v) => ControlFlow::Continue(v),
+            Self::Err(code, msg) => ControlFlow::Break(Exit::Err(code, msg)),
+        }
+    }
+}
+
+/// Boilerplate
+impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
+    fn from_residual(residual: Exit<Infallible>) -> Self {
+        match residual {
+            Exit::Err(code, msg) => Exit::Err(code, msg),
+        }
+    }
+}
+
+/// Boilerplate Conversion
+impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>> for Exit<T> {
+    fn from_residual(residual: std::result::Result<Infallible, E>) -> Self {
+        match residual {
+            Result::Err(e) => e.into(),
+        }
+    }
+}
+
+impl<T: Termination> Termination for Exit<T> {
+    fn report(self) -> ExitCode {
+        match self {
+            Exit::Ok(ok) => ok.report(),
+            Exit::Err(code, msg ) => {
+                _ = stderr().write(msg.as_bytes());
+                code
+            }
+        }
+    }
+}
+
+impl<T: Termination> From<ParseError> for Exit<T> {
+    fn from(err: ParseError) -> Self {
+        Self::Err(ExitCode::from(3), format!("Error parsing python source: {err}"))
+    }
+}
