@@ -18,27 +18,21 @@ use pt::{TestStatus, TestSuite};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
-    let src_path = PathBuf::from(
-        env::args()
-            .nth(1)
-            .ok_or_else(|| Exit::InvalidInvocation("Please provide a file to test".to_string()))?,
-    );
+    let src_path: PathBuf = env::args()
+        .nth(1)
+        .ok_or_else(|| Exit::InvalidInvocation("Please provide a file to test".to_string()))?
+        .into();
     let src = fs::read_to_string(&src_path)
         .map_err(|err| Exit::InternalError(format!("Error opening {src_path:?}: {err}")))?;
     let mut suite = TestSuite::try_from(src)
         .map_err(|err| Exit::InternalError(format!("Error parsing {src_path:?}: {err}")))?;
+
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output()?.stdout)?;
     suite.update_status(id, &python_output);
     print!("{}", suite.summary_report());
-    if suite
-        .tests()
-        .any(|test| matches!(test.status, TestStatus::Fail(_, _)))
-    {
-        return Exit::TestsFailed;
-    };
-    Exit::Ok(())
+    Exit::from(suite)
 }
 
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
@@ -48,6 +42,18 @@ enum Exit<T: Termination> {
     TestsFailed,
     InternalError(String),
     InvalidInvocation(String),
+}
+
+impl From<TestSuite> for Exit<()> {
+    fn from(suite: TestSuite) -> Self {
+        if suite
+            .tests()
+            .any(|test| matches!(test.status, TestStatus::Fail(_, _)))
+        {
+            return Exit::TestsFailed;
+        };
+        Exit::Ok(())
+    }
 }
 
 /// UTF8 Errors return InternalError
