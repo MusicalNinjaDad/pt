@@ -237,4 +237,15 @@ mod exitcodes {
             "Error parsing \"./tests/fixtures/basic/stdout.out\": ",
         ));
     }
+
+    #[test]
+    fn file_not_found() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(PathBuf::from("./tests/fixtures/no"));
+        pt_cmd.assert().code(3);
+        pt_cmd
+            .assert()
+            .stderr(contains("./tests/fixtures/no"));
+        pt_cmd.assert().stderr(contains("No such file or directory"));
+    }
 }
