@@ -185,7 +185,7 @@ impl From<PtError> for ExitCode {
             PtError::ParseError(err) => {
                 // io::attempt_print_to_stderr is not public,
                 // eprintln! will panic if stderr is blocked, so do this manually ...
-                _ = stderr().write_fmt(format_args!("Error parsing python source: {err:?}"));
+                _ = stderr().write_fmt(format_args!("Error parsing python source: {err}"));
                 ExitCode::from(3)
             }
         }
