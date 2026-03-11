@@ -22,11 +22,11 @@ fn main() -> Exit<()> {
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
     let src = match fs::read_to_string(&src_path) {
         Ok(src) => src,
-        Err(err) => return Exit::Err(3, format!("Error opening {src_path:?}: {err}")),
+        Err(err) => return Exit::InternalError(format!("Error opening {src_path:?}: {err}")),
     };
     let mut suite = match TestSuite::try_from(src) {
         Ok(suite) => suite,
-        Err(err) => return Exit::Err(3, format!("Error parsing {src_path:?}: {err}")),
+        Err(err) => return Exit::InternalError(format!("Error parsing {src_path:?}: {err}")),
     };
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
@@ -60,6 +60,7 @@ fn main() -> Exit<()> {
 /// unwinding and Drops to occur.
 enum Exit<T: Termination> {
     Ok(T),
+    InternalError(String),
     Err(u8, String),
 }
 
@@ -76,6 +77,7 @@ impl<T: Termination> Try for Exit<T> {
     fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
         match self {
             Self::Ok(v) => ControlFlow::Continue(v),
+            Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
             Self::Err(code, msg) => ControlFlow::Break(Exit::Err(code, msg)),
         }
     }
@@ -85,6 +87,7 @@ impl<T: Termination> Try for Exit<T> {
 impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
     fn from_residual(residual: Exit<Infallible>) -> Self {
         match residual {
+            Exit::InternalError(msg) => Exit::InternalError(msg),
             Exit::Err(code, msg) => Exit::Err(code, msg),
         }
     }
@@ -101,11 +104,15 @@ impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallib
     }
 }
 
-/// Write msg to stderr then pass on ExitCode: code
+/// Write msg to stderr then identify correct ExitCode
 impl<T: Termination> Termination for Exit<T> {
     fn report(self) -> ExitCode {
         match self {
             Exit::Ok(ok) => ok.report(),
+            Exit::InternalError(msg) => {
+                _ = stderr().write(msg.as_bytes());
+                ExitCode::from(3)
+            }
             Exit::Err(code, msg) => {
                 _ = stderr().write(msg.as_bytes());
                 code.into()
@@ -114,16 +121,16 @@ impl<T: Termination> Termination for Exit<T> {
     }
 }
 
-/// UTF8 Errors return ExitCode 3
+/// UTF8 Errors return InternalError
 impl<T: Termination> From<FromUtf8Error> for Exit<T> {
     fn from(err: FromUtf8Error) -> Self {
-        Exit::Err(3, err.to_string())
+        Exit::InternalError(err.to_string())
     }
 }
 
-/// IO Errors return ExitCode 3
+/// IO Errors return InternalError
 impl<T: Termination> From<io::Error> for Exit<T> {
     fn from(err: io::Error) -> Self {
-        Exit::Err(3, err.to_string())
+        Exit::InternalError(err.to_string())
     }
 }
