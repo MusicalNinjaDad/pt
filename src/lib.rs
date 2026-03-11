@@ -6,9 +6,7 @@
 //! Main entry point is `TestSuite`
 use core::ops::{ControlFlow, Try};
 use std::{
-    convert,
-    ops::FromResidual,
-    process::{ExitCode, Termination},
+    convert, io::{Write, stderr}, ops::FromResidual, process::{ExitCode, Termination}
 };
 
 use base_traits::AsStr;
@@ -174,7 +172,11 @@ impl From<ParseError> for PtError {
 impl From<PtError> for ExitCode {
     fn from(err: PtError) -> Self {
         match err {
-            PtError::ParseError(_) => ExitCode::from(3),
+            PtError::ParseError(err) => {
+                // io::attempt_print_to_stderr is not public,
+                // eprintln! will panic if stderr is blocked, so do this manually ...
+                _ = stderr().write_fmt(format_args!("Error parsing python source: {err:?}"));
+                ExitCode::from(3)},
         }
     }
 }
@@ -217,10 +219,12 @@ impl<T> FromResidual<std::result::Result<std::convert::Infallible, PtError>> for
     }
 }
 
-impl<T> Termination for PtResult<T> {
+/// The magic to actually perform the custom ExitCode conversion
+impl<T: Termination> Termination for PtResult<T> {
     fn report(self) -> ExitCode {
         match self {
-            PtResult::Ok(_) => ExitCode::SUCCESS,
+            // Use stdlib implementations for allowed Ok returns
+            PtResult::Ok(ok) => ok.report(),
             PtResult::Err(err) => ExitCode::from(err),
         }
     }
