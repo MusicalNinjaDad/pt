@@ -233,8 +233,8 @@ mod exitcodes {
         let mut pt_cmd = cargo_bin_cmd!("pt");
         pt_cmd.arg(PathBuf::from("./tests/fixtures/basic/stdout.out"));
         pt_cmd.assert().code(3);
-        pt_cmd
-            .assert()
-            .stderr(contains("Error parsing \"./tests/fixtures/basic/stdout.out\": "));
+        pt_cmd.assert().stderr(contains(
+            "Error parsing \"./tests/fixtures/basic/stdout.out\": ",
+        ));
     }
 }

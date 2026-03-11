@@ -51,7 +51,6 @@ fn main() -> Exit<()> {
 //  Exit code 5:
 //   No tests were collected
 
-
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
 enum Exit<T: Termination> {
