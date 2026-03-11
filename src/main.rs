@@ -1,9 +1,10 @@
 #![feature(try_trait_v2)]
 use std::{
     convert::Infallible,
-    env, fs,
+    env, fs, io,
     path::PathBuf,
     process::{Command, ExitCode, exit},
+    string::FromUtf8Error,
 };
 
 use core::ops::{ControlFlow, Try};
@@ -29,7 +30,7 @@ fn main() -> Exit<()> {
     };
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
-    let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
+    let python_output = String::from_utf8(runner.output()?.stdout)?;
     suite.update_status(id, &python_output);
     print!("{}", suite.summary_report());
     if suite
@@ -110,5 +111,19 @@ impl<T: Termination> Termination for Exit<T> {
                 code.into()
             }
         }
+    }
+}
+
+/// UTF8 Errors return ExitCode 3
+impl<T: Termination> From<FromUtf8Error> for Exit<T> {
+    fn from(err: FromUtf8Error) -> Self {
+        Exit::Err(3, err.to_string())
+    }
+}
+
+/// IO Errors return ExitCode 3
+impl<T: Termination> From<io::Error> for Exit<T> {
+    fn from(err: io::Error) -> Self {
+        Exit::Err(3, err.to_string())
     }
 }
