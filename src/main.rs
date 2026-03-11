@@ -17,8 +17,12 @@ use pt::{TestStatus, TestSuite};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
+    // TODO use clap or similar, leaving this unwrap until we do
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
-    let src = fs::read_to_string(&src_path).unwrap();
+    let src = match fs::read_to_string(&src_path) {
+        Ok(src) => src,
+        Err(err) => return Exit::Err(3, format!("Error opening {src_path:?}: {err}")),
+    };
     let mut suite = match TestSuite::try_from(src) {
         Ok(suite) => suite,
         Err(err) => return Exit::Err(3, format!("Error parsing {src_path:?}: {err}")),
