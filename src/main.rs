@@ -42,20 +42,6 @@ fn main() -> Exit<()> {
     Exit::Ok(())
 }
 
-// Pytest exit codes:
-//  Exit code 0:
-//   All tests were collected and passed successfully
-//  Exit code 1:
-//   Tests were collected and run but some of the tests failed
-//  Exit code 2:
-//   Test execution was interrupted by the user
-//  Exit code 3:
-//   Internal error happened while executing tests
-//  Exit code 4:
-//   pytest command line usage error
-//  Exit code 5:
-//   No tests were collected
-
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
 enum Exit<T: Termination> {
@@ -63,6 +49,52 @@ enum Exit<T: Termination> {
     TestsFailed,
     InternalError(String),
     Err(u8, String),
+}
+
+/// UTF8 Errors return InternalError
+impl<T: Termination> From<FromUtf8Error> for Exit<T> {
+    fn from(err: FromUtf8Error) -> Self {
+        Exit::InternalError(err.to_string())
+    }
+}
+
+/// IO Errors return InternalError
+impl<T: Termination> From<io::Error> for Exit<T> {
+    fn from(err: io::Error) -> Self {
+        Exit::InternalError(err.to_string())
+    }
+}
+
+impl<T: Termination> Termination for Exit<T> {
+    /// Write msg to stderr then identify correct ExitCode
+    ///
+    /// based upon Pytest exit codes:
+    ///  Exit code 0:
+    ///   All tests were collected and passed successfully
+    ///  Exit code 1:
+    ///   Tests were collected and run but some of the tests failed
+    ///  Exit code 2:
+    ///   Test execution was interrupted by the user
+    ///  Exit code 3:
+    ///   Internal error happened while executing tests
+    ///  Exit code 4:
+    ///   pytest command line usage error
+    ///  Exit code 5:
+    ///   No tests were collected
+    fn report(self) -> ExitCode {
+        match self {
+            Exit::Ok(ok) => ok.report(),
+            Exit::TestsFailed => ExitCode::from(1),
+            Exit::InternalError(msg) => {
+                _ = stderr().write(msg.as_bytes());
+                ExitCode::from(3)
+            }
+            Exit::Err(code, msg) => {
+                _ = stderr().write(msg.as_bytes());
+                code.into()
+            }
+        }
+    }
 }
 
 /// Boilerplate
@@ -104,37 +136,5 @@ impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallib
         match residual {
             Result::Err(e) => e.into(),
         }
-    }
-}
-
-/// Write msg to stderr then identify correct ExitCode
-impl<T: Termination> Termination for Exit<T> {
-    fn report(self) -> ExitCode {
-        match self {
-            Exit::Ok(ok) => ok.report(),
-            Exit::TestsFailed => ExitCode::from(1),
-            Exit::InternalError(msg) => {
-                _ = stderr().write(msg.as_bytes());
-                ExitCode::from(3)
-            }
-            Exit::Err(code, msg) => {
-                _ = stderr().write(msg.as_bytes());
-                code.into()
-            }
-        }
-    }
-}
-
-/// UTF8 Errors return InternalError
-impl<T: Termination> From<FromUtf8Error> for Exit<T> {
-    fn from(err: FromUtf8Error) -> Self {
-        Exit::InternalError(err.to_string())
-    }
-}
-
-/// IO Errors return InternalError
-impl<T: Termination> From<io::Error> for Exit<T> {
-    fn from(err: io::Error) -> Self {
-        Exit::InternalError(err.to_string())
     }
 }
