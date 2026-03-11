@@ -48,7 +48,6 @@ enum Exit<T: Termination> {
     Ok(T),
     TestsFailed,
     InternalError(String),
-    Err(u8, String),
 }
 
 /// UTF8 Errors return InternalError
@@ -89,10 +88,6 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(3)
             }
-            Exit::Err(code, msg) => {
-                _ = stderr().write(msg.as_bytes());
-                code.into()
-            }
         }
     }
 }
@@ -112,7 +107,6 @@ impl<T: Termination> Try for Exit<T> {
             Self::Ok(v) => ControlFlow::Continue(v),
             Self::TestsFailed => ControlFlow::Break(Exit::TestsFailed),
             Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
-            Self::Err(code, msg) => ControlFlow::Break(Exit::Err(code, msg)),
         }
     }
 }
@@ -123,7 +117,6 @@ impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
         match residual {
             Exit::TestsFailed => Exit::TestsFailed,
             Exit::InternalError(msg) => Exit::InternalError(msg),
-            Exit::Err(code, msg) => Exit::Err(code, msg),
         }
     }
 }
