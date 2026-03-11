@@ -6,7 +6,10 @@
 //! Main entry point is `TestSuite`
 use core::ops::{ControlFlow, Try};
 use std::{
-    convert, io::{Write, stderr}, ops::FromResidual, process::{ExitCode, Termination}
+    convert,
+    io::{Write, stderr},
+    ops::FromResidual,
+    process::{ExitCode, Termination},
 };
 
 use base_traits::AsStr;
@@ -172,7 +175,7 @@ impl From<ParseError> for PtError {
 }
 
 /// Where the ExitCode mapping **AND custom output** parts of the magic happens
-/// 
+///
 /// **Note: Side Effects** This conversion _will_ produce any side effects which are wanted as
 /// part of handling termination on this Error. It should not usually be called directly, only
 /// via `Termination::report()`
@@ -183,7 +186,8 @@ impl From<PtError> for ExitCode {
                 // io::attempt_print_to_stderr is not public,
                 // eprintln! will panic if stderr is blocked, so do this manually ...
                 _ = stderr().write_fmt(format_args!("Error parsing python source: {err:?}"));
-                ExitCode::from(3)},
+                ExitCode::from(3)
+            }
         }
     }
 }
