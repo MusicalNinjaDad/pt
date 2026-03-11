@@ -235,6 +235,6 @@ mod exitcodes {
         pt_cmd.assert().code(3);
         pt_cmd
             .assert()
-            .stderr(contains("Error parsing python source: "));
+            .stderr(contains("Error parsing \"./tests/fixtures/basic/stdout.out\": "));
     }
 }

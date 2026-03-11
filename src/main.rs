@@ -14,13 +14,15 @@ use std::{
 };
 
 use pt::{TestStatus, TestSuite};
-use ruff_python_parser::ParseError;
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
     let src_path = PathBuf::from(env::args().nth(1).unwrap());
-    let src = fs::read_to_string(src_path).unwrap();
-    let mut suite = TestSuite::try_from(src)?;
+    let src = fs::read_to_string(&src_path).unwrap();
+    let mut suite = match TestSuite::try_from(src) {
+        Ok(suite) => suite,
+        Err(err) => return Exit::Err(3, format!("Error parsing {src_path:?}: {err}")),
+    };
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
@@ -51,7 +53,7 @@ fn main() -> Exit<()> {
 
 enum Exit<T: Termination> {
     Ok(T),
-    Err(ExitCode, String),
+    Err(u8, String),
 }
 
 /// Boilerplate
@@ -98,17 +100,8 @@ impl<T: Termination> Termination for Exit<T> {
             Exit::Ok(ok) => ok.report(),
             Exit::Err(code, msg) => {
                 _ = stderr().write(msg.as_bytes());
-                code
+                code.into()
             }
         }
-    }
-}
-
-impl<T: Termination> From<ParseError> for Exit<T> {
-    fn from(err: ParseError) -> Self {
-        Self::Err(
-            ExitCode::from(3),
-            format!("Error parsing python source: {err}"),
-        )
     }
 }
