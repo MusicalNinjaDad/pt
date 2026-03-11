@@ -37,7 +37,7 @@ fn main() -> Exit<()> {
         .tests()
         .any(|test| matches!(test.status, TestStatus::Fail(_, _)))
     {
-        exit(1);
+        return Exit::TestsFailed;
     };
     Exit::Ok(())
 }
@@ -60,6 +60,7 @@ fn main() -> Exit<()> {
 /// unwinding and Drops to occur.
 enum Exit<T: Termination> {
     Ok(T),
+    TestsFailed,
     InternalError(String),
     Err(u8, String),
 }
@@ -77,6 +78,7 @@ impl<T: Termination> Try for Exit<T> {
     fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
         match self {
             Self::Ok(v) => ControlFlow::Continue(v),
+            Self::TestsFailed => ControlFlow::Break(Exit::TestsFailed),
             Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
             Self::Err(code, msg) => ControlFlow::Break(Exit::Err(code, msg)),
         }
@@ -87,6 +89,7 @@ impl<T: Termination> Try for Exit<T> {
 impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
     fn from_residual(residual: Exit<Infallible>) -> Self {
         match residual {
+            Exit::TestsFailed => Exit::TestsFailed,
             Exit::InternalError(msg) => Exit::InternalError(msg),
             Exit::Err(code, msg) => Exit::Err(code, msg),
         }
@@ -109,6 +112,7 @@ impl<T: Termination> Termination for Exit<T> {
     fn report(self) -> ExitCode {
         match self {
             Exit::Ok(ok) => ok.report(),
+            Exit::TestsFailed => ExitCode::from(1),
             Exit::InternalError(msg) => {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(3)
