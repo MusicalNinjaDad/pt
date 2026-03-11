@@ -248,4 +248,11 @@ mod exitcodes {
             .assert()
             .stderr(contains("No such file or directory"));
     }
+
+    #[test]
+    fn no_file_specified() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.assert().code(4);
+        pt_cmd.assert().stderr(contains("Please provide a file to test"));
+    }
 }

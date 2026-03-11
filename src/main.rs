@@ -18,8 +18,11 @@ use pt::{TestStatus, TestSuite};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
-    // TODO use clap or similar, leaving this unwrap until we do
-    let src_path = PathBuf::from(env::args().nth(1).unwrap());
+    let src_path = match env::args().nth(1) {
+        Some(path) => path,
+        None => return Exit::InvalidInvocation("Please provide a file to test".to_string()),
+    };
+    let src_path = PathBuf::from(src_path);
     let src = match fs::read_to_string(&src_path) {
         Ok(src) => src,
         Err(err) => return Exit::InternalError(format!("Error opening {src_path:?}: {err}")),
@@ -48,6 +51,7 @@ enum Exit<T: Termination> {
     Ok(T),
     TestsFailed,
     InternalError(String),
+    InvalidInvocation(String),
 }
 
 /// UTF8 Errors return InternalError
@@ -88,6 +92,10 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(3)
             }
+            Exit::InvalidInvocation(msg)=> {
+                _ = stderr().write(msg.as_bytes());
+                ExitCode::from(4)
+            }
         }
     }
 }
@@ -107,6 +115,7 @@ impl<T: Termination> Try for Exit<T> {
             Self::Ok(v) => ControlFlow::Continue(v),
             Self::TestsFailed => ControlFlow::Break(Exit::TestsFailed),
             Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
+            Self::InvalidInvocation(msg) => ControlFlow::Break(Exit::InvalidInvocation(msg)),
         }
     }
 }
@@ -117,6 +126,7 @@ impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
         match residual {
             Exit::TestsFailed => Exit::TestsFailed,
             Exit::InternalError(msg) => Exit::InternalError(msg),
+            Exit::InvalidInvocation(msg) => Exit::InvalidInvocation(msg),
         }
     }
 }
