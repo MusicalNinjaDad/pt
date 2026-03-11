@@ -15,7 +15,6 @@ fn main() -> PtResult<()> {
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output().unwrap().stdout).unwrap();
-    dbg!(&python_output);
     suite.update_status(id, &python_output);
     print!("{}", suite.summary_report());
     if suite
