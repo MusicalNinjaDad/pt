@@ -1,5 +1,4 @@
 #![feature(if_let_guard)]
-#![feature(try_trait_v2)]
 //! All core `pt` functionality ìs available as a library. This primarily consists of parsing and
 //! report / code generation.
 //!
