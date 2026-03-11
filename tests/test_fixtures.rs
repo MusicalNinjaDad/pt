@@ -90,6 +90,7 @@ mod basic {
         pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
         let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         pt_cmd.assert().stdout(eq(expected_stdout));
+        pt_cmd.assert().code(1);
     }
 }
 
@@ -165,5 +166,6 @@ mod complex {
         pt_cmd.arg(FIXTURES.join("src.py").as_os_str());
         let expected_stdout = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         pt_cmd.assert().stdout(eq(expected_stdout));
+        pt_cmd.assert().code(1);
     }
 }
