@@ -158,6 +158,8 @@ impl TestSuite {
     }
 }
 
+/// Custom Error type allowing for conversion to specific ExitCodes via
+/// `impl From<PtError> for ExitCode`
 #[derive(Debug, Clone, PartialEq)]
 pub enum PtError {
     ParseError(ParseError),
@@ -169,6 +171,11 @@ impl From<ParseError> for PtError {
     }
 }
 
+/// Where the ExitCode mapping **AND custom output** parts of the magic happens
+/// 
+/// **Note: Side Effects** This conversion _will_ produce any side effects which are wanted as
+/// part of handling termination on this Error. It should not usually be called directly, only
+/// via `Termination::report()`
 impl From<PtError> for ExitCode {
     fn from(err: PtError) -> Self {
         match err {
@@ -181,11 +188,13 @@ impl From<PtError> for ExitCode {
     }
 }
 
+/// Custom Result type with conversion from Result<_, PtError> and `Termination` handling `ExitCode`
 pub enum PtResult<T> {
     Ok(T),
     Err(PtError),
 }
 
+/// Boilerplate
 impl<T> Try for PtResult<T> {
     type Output = T;
 
@@ -203,6 +212,7 @@ impl<T> Try for PtResult<T> {
     }
 }
 
+/// Boilerplate
 impl<T> FromResidual<PtResult<std::convert::Infallible>> for PtResult<T> {
     fn from_residual(residual: PtResult<std::convert::Infallible>) -> Self {
         match residual {
@@ -211,6 +221,7 @@ impl<T> FromResidual<PtResult<std::convert::Infallible>> for PtResult<T> {
     }
 }
 
+/// Boilerplate to alllow traits such as `TryFrom` to require return types `Result<_, PtError>`
 impl<T> FromResidual<std::result::Result<std::convert::Infallible, PtError>> for PtResult<T> {
     fn from_residual(residual: std::result::Result<std::convert::Infallible, PtError>) -> Self {
         match residual {
