@@ -51,6 +51,9 @@ fn main() -> Exit<()> {
 //  Exit code 5:
 //   No tests were collected
 
+
+/// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
+/// unwinding and Drops to occur.
 enum Exit<T: Termination> {
     Ok(T),
     Err(u8, String),
@@ -94,6 +97,7 @@ impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallib
     }
 }
 
+/// Write msg to stderr then pass on ExitCode: code
 impl<T: Termination> Termination for Exit<T> {
     fn report(self) -> ExitCode {
         match self {
