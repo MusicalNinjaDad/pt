@@ -222,3 +222,14 @@ mod pass {
         pt_cmd.assert().code(0);
     }
 }
+
+mod exitcodes {
+    use super::*;
+
+    #[test]
+    fn invalid_src() {
+        let mut pt_cmd = cargo_bin_cmd!("pt");
+        pt_cmd.arg(PathBuf::from("./tests/fixtures/basic/stdout.out"));
+        pt_cmd.assert().code(3);
+    }
+}
