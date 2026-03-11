@@ -18,19 +18,15 @@ use pt::{TestStatus, TestSuite};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
-    let src_path = match env::args().nth(1) {
-        Some(path) => path,
-        None => return Exit::InvalidInvocation("Please provide a file to test".to_string()),
-    };
-    let src_path = PathBuf::from(src_path);
-    let src = match fs::read_to_string(&src_path) {
-        Ok(src) => src,
-        Err(err) => return Exit::InternalError(format!("Error opening {src_path:?}: {err}")),
-    };
-    let mut suite = match TestSuite::try_from(src) {
-        Ok(suite) => suite,
-        Err(err) => return Exit::InternalError(format!("Error parsing {src_path:?}: {err}")),
-    };
+    let src_path = PathBuf::from(
+        env::args()
+            .nth(1)
+            .ok_or_else(|| Exit::InvalidInvocation("Please provide a file to test".to_string()))?,
+    );
+    let src = fs::read_to_string(&src_path)
+        .map_err(|err| Exit::InternalError(format!("Error opening {src_path:?}: {err}")))?;
+    let mut suite = TestSuite::try_from(src)
+        .map_err(|err| Exit::InternalError(format!("Error parsing {src_path:?}: {err}")))?;
     let mut runner = Command::new("python");
     runner.args(["-c", &suite.runner(id)]);
     let python_output = String::from_utf8(runner.output()?.stdout)?;
@@ -92,7 +88,7 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(3)
             }
-            Exit::InvalidInvocation(msg)=> {
+            Exit::InvalidInvocation(msg) => {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(4)
             }
