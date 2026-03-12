@@ -48,7 +48,7 @@ pub struct TestSuite {
 }
 
 impl TryFrom<String> for TestSuite {
-    type Error = ParseError;
+    type Error = Error;
     fn try_from(src: String) -> Result<Self, Self::Error> {
         let tests: IndexMap<String, TestDetails> = parse_module(&src)?
             .into_suite()
@@ -159,6 +159,13 @@ pub enum Error {
     InvalidTraceback,
     InvalidStatus,
     InvalidOutput,
+    InvalidPython(ParseError),
+}
+
+impl From<ParseError> for Error {
+    fn from(err: ParseError) -> Self {
+        Self::InvalidPython(err)
+    }
 }
 
 impl Display for Error {
@@ -167,6 +174,7 @@ impl Display for Error {
             Error::InvalidTraceback => write!(f, "Invalid Traceback"),
             Error::InvalidStatus => write!(f, "Invalid Status"),
             Error::InvalidOutput => write!(f, "Invalid Output"),
+            Error::InvalidPython(err) => write!(f, "{err}"),
         }
     }
 }
