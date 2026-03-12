@@ -33,7 +33,7 @@ fn main() -> Exit<()> {
 
     let python_output = String::from_utf8(runner.output()?.stdout)?;
 
-    suite.update_status(id, &python_output);
+    suite.update_status(id, &python_output)?;
     print!("{}", suite.summary_report());
     Exit::from(suite)
 }
@@ -69,6 +69,12 @@ impl<T: Termination> From<FromUtf8Error> for Exit<T> {
 /// IO Errors return InternalError
 impl<T: Termination> From<io::Error> for Exit<T> {
     fn from(err: io::Error) -> Self {
+        Exit::InternalError(err.to_string())
+    }
+}
+
+impl<T: Termination> From<pt::Error> for Exit<T> {
+    fn from(err: pt::Error) -> Self {
         Exit::InternalError(err.to_string())
     }
 }

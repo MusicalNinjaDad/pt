@@ -39,7 +39,7 @@ mod basic {
     fn parse_status() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         assert!(matches!(
             &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
@@ -61,7 +61,7 @@ mod basic {
     fn assertion_rewrite_test_fails() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.test("test_fails").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_fails.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
@@ -71,7 +71,7 @@ mod basic {
     fn summary_report() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.summary_report();
         let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
@@ -112,7 +112,7 @@ mod complex {
     fn parse_status() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         assert!(matches!(
             &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
@@ -137,7 +137,7 @@ mod complex {
     fn assertion_rewrite_test_seven_is_six() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.test("test_seven_is_six").unwrap().report().unwrap();
         let expect_rpt = fs::read_to_string(FIXTURES.join("test_seven_is_six.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
@@ -147,7 +147,7 @@ mod complex {
     fn summary_report() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.summary_report();
         let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
@@ -187,7 +187,7 @@ mod pass {
     fn parse_status() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         assert!(matches!(
             &suite.test("test_passes").unwrap().status,
             TestStatus::Pass
@@ -198,7 +198,7 @@ mod pass {
     fn assertion_rewrite_test_passes() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.test("test_passes").unwrap().report();
         assert!(report.is_none());
     }
@@ -207,7 +207,7 @@ mod pass {
     fn summary_report() {
         let mut suite = load_src(&FIXTURES);
         let stdout = fs::read_to_string(FIXTURES.join("stdout.out")).unwrap();
-        suite.update_status(ID, &stdout);
+        suite.update_status(ID, &stdout).unwrap();
         let report = suite.summary_report();
         let expect_rpt = fs::read_to_string(FIXTURES.join("summary.rpt")).unwrap();
         assert_eq!(expect_rpt, report);
