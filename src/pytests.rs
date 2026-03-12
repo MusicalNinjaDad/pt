@@ -101,8 +101,7 @@ pub enum TestStatus {
     NoRun,
     Running,
     Pass,
-    Fail(PyError, Traceback),
-    Unknown(String),
+    Fail(PyError, Traceback)
 }
 
 impl AsStr for TestStatus {
@@ -112,7 +111,6 @@ impl AsStr for TestStatus {
             TestStatus::Running => "RUNNING",
             TestStatus::Pass => "PASS",
             TestStatus::Fail(_, _) => "FAIL",
-            TestStatus::Unknown(reason) => reason,
         }
     }
 }
