@@ -24,8 +24,8 @@ impl From<&str> for Traceback {
 }
 
 impl Traceback {
-    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TracebackLine<'_>> {
-        self.text.lines().map(TracebackLine::from)
+    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = Result<TracebackLine<'_>, Error>> {
+        self.text.lines().map(TracebackLine::try_from)
     }
 }
 
@@ -37,16 +37,18 @@ pub(crate) enum TracebackLine<'line> {
     Exception(PyError),
 }
 
-impl<'line> From<&'line str> for TracebackLine<'line> {
-    fn from(line: &'line str) -> Self {
+impl<'line> TryFrom<&'line str> for TracebackLine<'line> {
+    type Error = Error;
+
+    fn try_from(line: &'line str) -> Result<Self, Self::Error> {
         match line.split_whitespace().next() {
-            Some("Traceback") => Self::TracebackHeader,
-            Some("File") => Self::FrameHeader(line.try_into().unwrap()),
+            Some("Traceback") => Ok(Self::TracebackHeader),
+            Some("File") => Ok(Self::FrameHeader(line.try_into()?)),
             _ => {
                 if line.starts_with("    ") {
-                    Self::FrameContents { text: line }
+                    Ok(Self::FrameContents { text: line })
                 } else {
-                    Self::Exception(PyError::try_from(line).unwrap())
+                    Ok(Self::Exception(PyError::try_from(line)?))
                 }
             }
         }

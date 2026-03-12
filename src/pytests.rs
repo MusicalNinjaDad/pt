@@ -56,8 +56,8 @@ impl PythonTest<'_, '_, '_> {
                 let mut prefix = Prefix::Indent(0);
                 for line in tb.lines() {
                     match line {
-                        TracebackLine::TracebackHeader => (),
-                        TracebackLine::FrameHeader(frameheader) => {
+                        Ok(TracebackLine::TracebackHeader) => (),
+                        Ok(TracebackLine::FrameHeader(frameheader)) => {
                             frame_buf.clear(); // We only want details from the last frame
 
                             let failure =
@@ -73,7 +73,7 @@ impl PythonTest<'_, '_, '_> {
 
                             prefix = Prefix::LineNumber(frameheader.line_number);
                         }
-                        TracebackLine::FrameContents { text } => match prefix {
+                        Ok(TracebackLine::FrameContents { text }) => match prefix {
                             // TODO: compatibility python <3.13 ... need to manually recreate the
                             //       nice details that are in later version Tracebacks
                             Prefix::LineNumber(lineno) => {
@@ -84,9 +84,10 @@ impl PythonTest<'_, '_, '_> {
                                 frame_buf.push_line(indent, [text]);
                             }
                         },
-                        TracebackLine::Exception(err) => {
+                        Ok(TracebackLine::Exception(err)) => {
                             frame_buf.push_line(0, [err.as_str()]);
                         }
+                        Err(_) => (), // Skip invalid lines
                     }
                 }
             }
