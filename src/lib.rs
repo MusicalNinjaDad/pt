@@ -152,6 +152,11 @@ impl TestSuite {
     }
 }
 
+#[derive(Debug)]
+pub enum Error {
+    InvalidTraceback,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

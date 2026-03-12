@@ -2,6 +2,8 @@
 
 use base_traits::AsStr;
 
+use crate::Error;
+
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
     text: String,
@@ -59,9 +61,9 @@ pub(crate) struct FrameHeader<'line> {
 }
 
 impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
-    type Error = ParseError;
+    type Error = Error;
 
-    fn try_from(line: &'line str) -> Result<FrameHeader<'line>, ParseError> {
+    fn try_from(line: &'line str) -> Result<FrameHeader<'line>, Error> {
         (|| {
             let mut words = line.split_whitespace();
             let file_name = words.nth(1)?;
@@ -73,7 +75,7 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
                 line_number,
             })
         })()
-        .ok_or(ParseError)
+        .ok_or(Error::InvalidTraceback)
     }
 }
 
@@ -93,10 +95,10 @@ impl AsStr for PyError {
 }
 
 impl TryFrom<&str> for PyError {
-    type Error = ParseError;
+    type Error = Error;
 
     //TODO make this return an externally available error type so ParseError can be pub(crate)
-    fn try_from(traceback: &str) -> Result<PyError, ParseError> {
+    fn try_from(traceback: &str) -> Result<PyError, Error> {
         (|| {
             let lastline = traceback.lines().last()?;
             Some(match lastline {
@@ -104,9 +106,6 @@ impl TryFrom<&str> for PyError {
                 _ => Self::Other,
             })
         })()
-        .ok_or(ParseError)
+        .ok_or(Error::InvalidTraceback)
     }
 }
-
-#[derive(Debug)]
-pub struct ParseError;
