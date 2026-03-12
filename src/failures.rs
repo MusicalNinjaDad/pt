@@ -99,7 +99,6 @@ impl AsStr for PyError {
 impl TryFrom<&str> for PyError {
     type Error = Error;
 
-    //TODO make this return an externally available error type so ParseError can be pub(crate)
     fn try_from(traceback: &str) -> Result<PyError, Error> {
         (|| {
             let lastline = traceback.lines().last()?;
