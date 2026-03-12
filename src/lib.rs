@@ -3,6 +3,8 @@
 //! report / code generation.
 //!
 //! Main entry point is `TestSuite`
+use std::fmt::Display;
+
 use base_traits::AsStr;
 use indexmap::IndexMap;
 use ruff_python_ast::Stmt;
@@ -125,15 +127,13 @@ impl TestSuite {
                     let status = words.next().unwrap();
                     test.status = (status, tb_buf.as_str())
                         .try_into()
-                        .unwrap_or(TestStatus::Unknown);
+                        .unwrap_or_else(|err: Error| TestStatus::Unknown(err.to_string()));
                     tb_buf.clear();
                 }
                 Some(_) => {
                     tb_buf.push_line(0, [line]);
                 }
-                None => {
-                    todo!("Make update_status fallible")
-                }
+                None => (), // ignore blank lines
             }
         }
     }
@@ -158,6 +158,15 @@ impl TestSuite {
 pub enum Error {
     InvalidTraceback,
     InvalidStatus,
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::InvalidTraceback => write!(f, "Invalid Traceback"),
+            Error::InvalidStatus => write!(f, "Invalid Status"),
+        }
+    }
 }
 
 #[cfg(test)]
