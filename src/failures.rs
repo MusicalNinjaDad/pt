@@ -1,6 +1,7 @@
 //! Parsing and storing the output from failed tests
 
 use base_traits::AsStr;
+use std::str::FromStr;
 
 use crate::Error;
 
@@ -59,7 +60,7 @@ impl<'line> TryFrom<&'line str> for TracebackLine<'line> {
 pub(crate) struct FrameHeader<'line> {
     file_name: &'line str,
     pub(crate) function_name: &'line str,
-    pub(crate) line_number: &'line str,
+    pub(crate) line_number: usize,
 }
 
 impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
@@ -69,7 +70,7 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
         (|| {
             let mut words = line.split_whitespace();
             let file_name = words.nth(1)?;
-            let line_number = words.nth(1)?.trim_end_matches(",");
+            let line_number = usize::from_str(words.nth(1)?.trim_end_matches(",")).ok()?;
             let function_name = words.nth(1)?;
             Some(FrameHeader {
                 file_name,
