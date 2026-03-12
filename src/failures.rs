@@ -39,7 +39,7 @@ impl<'line> From<&'line str> for TracebackLine<'line> {
     fn from(line: &'line str) -> Self {
         match line.split_whitespace().next() {
             Some("Traceback") => Self::TracebackHeader,
-            Some("File") => Self::FrameHeader(line.into()),
+            Some("File") => Self::FrameHeader(line.try_into().unwrap()),
             _ => {
                 if line.starts_with("    ") {
                     Self::FrameContents { text: line }
@@ -58,17 +58,22 @@ pub(crate) struct FrameHeader<'line> {
     pub(crate) line_number: &'line str,
 }
 
-impl<'line> From<&'line str> for FrameHeader<'line> {
-    fn from(line: &'line str) -> Self {
-        let mut words = line.split_whitespace();
-        let file_name = words.nth(1).unwrap();
-        let line_number = words.nth(1).unwrap().trim_end_matches(",");
-        let function_name = words.nth(1).unwrap();
-        Self {
-            file_name,
-            function_name,
-            line_number,
+impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
+    type Error = ParseError;
+
+    fn try_from(line: &'line str) -> Result<FrameHeader<'line>, ParseError> {
+        fn parse_line<'line>(line: &'line str) -> Option<FrameHeader<'line>> {
+            let mut words = line.split_whitespace();
+            let file_name = words.nth(1)?;
+            let line_number = words.nth(1)?.trim_end_matches(",");
+            let function_name = words.nth(1)?;
+            Some(FrameHeader {
+                file_name,
+                function_name,
+                line_number,
+            })
         }
+        parse_line(line).ok_or(ParseError)
     }
 }
 
@@ -96,3 +101,6 @@ impl From<&str> for PyError {
         }
     }
 }
+
+#[derive(Debug)]
+pub(crate) struct ParseError;
