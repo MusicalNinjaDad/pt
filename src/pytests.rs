@@ -121,7 +121,7 @@ impl From<(&str, &str)> for TestStatus {
         match status {
             "RUNNING" => Self::Running,
             "PASS" => Self::Pass,
-            "FAIL" => Self::Fail(traceback.into(), traceback.into()),
+            "FAIL" => Self::Fail(traceback.try_into().unwrap(), traceback.into()),
             _ => todo!("Make fallible"),
         }
     }

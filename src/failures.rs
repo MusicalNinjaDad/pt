@@ -44,7 +44,7 @@ impl<'line> From<&'line str> for TracebackLine<'line> {
                 if line.starts_with("    ") {
                     Self::FrameContents { text: line }
                 } else {
-                    Self::Exception(PyError::from(line))
+                    Self::Exception(PyError::try_from(line).unwrap())
                 }
             }
         }
@@ -92,15 +92,21 @@ impl AsStr for PyError {
     }
 }
 
-impl From<&str> for PyError {
-    fn from(traceback: &str) -> Self {
-        let lastline = traceback.lines().last().unwrap();
-        match lastline {
-            "AssertionError" => Self::AssertionError,
-            _ => Self::Other,
-        }
+impl TryFrom<&str> for PyError {
+    type Error = ParseError;
+
+    //TODO make this return an externally available error type so ParseError can be pub(crate)
+    fn try_from(traceback: &str) -> Result<PyError, ParseError> {
+        (|| {
+            let lastline = traceback.lines().last()?;
+            Some(match lastline {
+                "AssertionError" => Self::AssertionError,
+                _ => Self::Other,
+            })
+        })()
+        .ok_or(ParseError)
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct ParseError;
+pub struct ParseError;
