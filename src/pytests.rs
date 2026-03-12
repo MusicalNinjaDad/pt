@@ -58,8 +58,7 @@ impl PythonTest<'_, '_, '_> {
                         Ok(TracebackLine::FrameHeader(frameheader)) => {
                             frame_buf.clear(); // We only want details from the last frame
 
-                            let failure =
-                                Location::Line(frameheader.line_number);
+                            let failure = Location::Line(frameheader.line_number);
                             let testfn_def = Location::Offset(self.test_ast.range.start().into());
                             let line_no = frameheader.line_number.to_string();
                             let indent = line_no.len() + 2;

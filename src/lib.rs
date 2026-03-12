@@ -158,7 +158,7 @@ impl TestSuite {
 pub enum Error {
     InvalidTraceback,
     InvalidStatus,
-    InvalidOutput
+    InvalidOutput,
 }
 
 impl Display for Error {
