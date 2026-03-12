@@ -62,7 +62,7 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
     type Error = ParseError;
 
     fn try_from(line: &'line str) -> Result<FrameHeader<'line>, ParseError> {
-        fn parse_line<'line>(line: &'line str) -> Option<FrameHeader<'line>> {
+        (|| {
             let mut words = line.split_whitespace();
             let file_name = words.nth(1)?;
             let line_number = words.nth(1)?.trim_end_matches(",");
@@ -72,8 +72,8 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
                 function_name,
                 line_number,
             })
-        }
-        parse_line(line).ok_or(ParseError)
+        })()
+        .ok_or(ParseError)
     }
 }
 
