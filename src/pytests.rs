@@ -6,7 +6,7 @@ use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
 use crate::{
-    PyError, Traceback,
+    Error, PyError, Traceback,
     failures::TracebackLine,
     multiline::{Location, Multiline, MultilineMut},
 };
@@ -104,6 +104,7 @@ pub enum TestStatus {
     Running,
     Pass,
     Fail(PyError, Traceback),
+    Unknown,
 }
 
 impl AsStr for TestStatus {
@@ -113,17 +114,20 @@ impl AsStr for TestStatus {
             TestStatus::Running => "RUNNING",
             TestStatus::Pass => "PASS",
             TestStatus::Fail(_, _) => "FAIL",
+            TestStatus::Unknown => "UNKNOWN",
         }
     }
 }
 
-impl From<(&str, &str)> for TestStatus {
-    fn from((status, traceback): (&str, &str)) -> Self {
+impl TryFrom<(&str, &str)> for TestStatus {
+    type Error = Error;
+
+    fn try_from((status, traceback): (&str, &str)) -> Result<Self, Self::Error> {
         match status {
-            "RUNNING" => Self::Running,
-            "PASS" => Self::Pass,
-            "FAIL" => Self::Fail(traceback.try_into().unwrap(), traceback.into()),
-            _ => todo!("Make fallible"),
+            "RUNNING" => Ok(Self::Running),
+            "PASS" => Ok(Self::Pass),
+            "FAIL" => Ok(Self::Fail(traceback.try_into()?, traceback.into())),
+            _ => Err(Error::InvalidStatus),
         }
     }
 }

@@ -123,7 +123,9 @@ impl TestSuite {
                     let testname = words.next().unwrap();
                     let test = self.tests.get_mut(testname).unwrap();
                     let status = words.next().unwrap();
-                    test.status = (status, tb_buf.as_str()).into();
+                    test.status = (status, tb_buf.as_str())
+                        .try_into()
+                        .unwrap_or(TestStatus::Unknown);
                     tb_buf.clear();
                 }
                 Some(_) => {
@@ -155,6 +157,7 @@ impl TestSuite {
 #[derive(Debug)]
 pub enum Error {
     InvalidTraceback,
+    InvalidStatus,
 }
 
 #[cfg(test)]
