@@ -124,9 +124,12 @@ impl TestSuite {
             let mut words = line.split_whitespace();
             match words.next() {
                 Some(id_) if id_ == id => {
-                    let testname = words.next().ok_or(Error::InvalidOutput)?;
-                    let test = self.tests.get_mut(testname).ok_or(Error::InvalidOutput)?;
-                    let status = words.next().ok_or(Error::InvalidOutput)?;
+                    let testname = words.next().ok_or(Error::InvalidOutput(line.to_string()))?;
+                    let test = self
+                        .tests
+                        .get_mut(testname)
+                        .ok_or(Error::InvalidOutput(line.to_string()))?;
+                    let status = words.next().ok_or(Error::InvalidOutput(line.to_string()))?;
                     test.status = (status, tb_buf.as_str()).try_into()?;
                     tb_buf.clear();
                 }
@@ -158,7 +161,7 @@ impl TestSuite {
 pub enum Error {
     InvalidTraceback(String),
     InvalidStatus,
-    InvalidOutput,
+    InvalidOutput(String),
     InvalidPython(ParseError),
 }
 
@@ -173,7 +176,7 @@ impl Display for Error {
         match self {
             Error::InvalidTraceback(tb) => write!(f, "Invalid Traceback: {tb}"),
             Error::InvalidStatus => write!(f, "Invalid Status"),
-            Error::InvalidOutput => write!(f, "Invalid Output"),
+            Error::InvalidOutput(line) => write!(f, "Invalid Output: {line}"),
             Error::InvalidPython(err) => write!(f, "{err}"),
         }
     }
