@@ -4,7 +4,7 @@ use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
 use crate::{
-    Error, PyError, Traceback,
+    Error, Exception, Traceback,
     failures::TracebackLine,
     multiline::{Location, Multiline, MultilineMut},
 };
@@ -50,7 +50,7 @@ impl PythonTest<'_, '_, '_> {
 
         let mut frame_buf = String::new();
         match err {
-            PyError::AssertionError => {
+            Exception::AssertionError => {
                 let mut prefix = Prefix::Indent(0);
                 for line in tb.lines() {
                     match line {
@@ -101,7 +101,7 @@ pub enum TestStatus {
     NoRun,
     Running,
     Pass,
-    Fail(PyError, Traceback)
+    Fail(Exception, Traceback)
 }
 
 impl AsStr for TestStatus {

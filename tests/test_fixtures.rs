@@ -8,7 +8,7 @@ use std::{
 use assert_cmd::cargo::*;
 use predicates::ord::eq;
 
-use pt::{PyError, TestStatus, TestSuite, Traceback};
+use pt::{Exception, TestStatus, TestSuite, Traceback};
 
 fn load_src(directory: &Path) -> TestSuite {
     let src = fs::read_to_string(directory.join("src.py")).unwrap();
@@ -50,7 +50,7 @@ mod basic {
         let tf_status = &suite.test("test_fails").unwrap().status;
         assert!(
             matches!(tf_status, TestStatus::Fail(err, tb)
-                if matches!(err, PyError::AssertionError)
+                if matches!(err, Exception::AssertionError)
                 && tb == &expect_tb
             ),
             "{tf_status:?}"
@@ -125,7 +125,7 @@ mod complex {
             let tf_status = &suite.test(failed_test).unwrap().status;
             assert!(
                 matches!(tf_status, TestStatus::Fail(err, tb)
-                    if matches!(err, PyError::AssertionError)
+                    if matches!(err, Exception::AssertionError)
                     && tb == &expect_tb
                 ),
                 "{failed_test}: {tf_status:?}"

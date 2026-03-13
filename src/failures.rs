@@ -35,7 +35,7 @@ pub(crate) enum TracebackLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
     FrameContents { text: &'line str },
-    Exception(PyError),
+    Exception(Exception),
 }
 
 impl<'line> TryFrom<&'line str> for TracebackLine<'line> {
@@ -49,7 +49,7 @@ impl<'line> TryFrom<&'line str> for TracebackLine<'line> {
                 if line.starts_with("    ") {
                     Ok(Self::FrameContents { text: line })
                 } else {
-                    Ok(Self::Exception(PyError::try_from(line)?))
+                    Ok(Self::Exception(Exception::try_from(line)?))
                 }
             }
         }
@@ -83,12 +83,12 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PyError {
+pub enum Exception {
     AssertionError,
     Other,
 }
 
-impl AsStr for PyError {
+impl AsStr for Exception {
     fn as_str(&self) -> &str {
         match self {
             Self::AssertionError => "AssertionError",
@@ -97,10 +97,10 @@ impl AsStr for PyError {
     }
 }
 
-impl TryFrom<&str> for PyError {
+impl TryFrom<&str> for Exception {
     type Error = Error;
 
-    fn try_from(traceback: &str) -> Result<PyError, Error> {
+    fn try_from(traceback: &str) -> Result<Exception, Error> {
         (|| {
             let lastline = traceback.lines().last()?;
             Some(match lastline {

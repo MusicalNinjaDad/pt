@@ -11,7 +11,7 @@ use ruff_python_ast::Stmt;
 use ruff_python_parser::{ParseError, parse_module};
 
 mod failures;
-pub use failures::{PyError, Traceback};
+pub use failures::{Exception, Traceback};
 
 mod pytests;
 pub use pytests::{PythonTest, TestStatus};
