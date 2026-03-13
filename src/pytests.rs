@@ -101,7 +101,7 @@ pub enum TestStatus {
     NoRun,
     Running,
     Pass,
-    Fail(Exception, Traceback)
+    Fail(Exception, Traceback),
 }
 
 impl AsStr for TestStatus {
