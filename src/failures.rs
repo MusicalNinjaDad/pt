@@ -1,6 +1,9 @@
 //! Parsing and storing the output from failed tests
 
 use base_traits::AsStr;
+use std::str::FromStr;
+
+use crate::Error;
 
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Traceback {
@@ -22,8 +25,8 @@ impl From<&str> for Traceback {
 }
 
 impl Traceback {
-    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = TracebackLine<'_>> {
-        self.text.lines().map(TracebackLine::from)
+    pub(crate) fn lines(&'_ self) -> impl Iterator<Item = Result<TracebackLine<'_>, Error>> {
+        self.text.lines().map(TracebackLine::try_from)
     }
 }
 
@@ -32,19 +35,21 @@ pub(crate) enum TracebackLine<'line> {
     TracebackHeader,
     FrameHeader(FrameHeader<'line>),
     FrameContents { text: &'line str },
-    Exception(PyError),
+    Exception(Exception),
 }
 
-impl<'line> From<&'line str> for TracebackLine<'line> {
-    fn from(line: &'line str) -> Self {
+impl<'line> TryFrom<&'line str> for TracebackLine<'line> {
+    type Error = Error;
+
+    fn try_from(line: &'line str) -> Result<Self, Self::Error> {
         match line.split_whitespace().next() {
-            Some("Traceback") => Self::TracebackHeader,
-            Some("File") => Self::FrameHeader(line.into()),
+            Some("Traceback") => Ok(Self::TracebackHeader),
+            Some("File") => Ok(Self::FrameHeader(line.try_into()?)),
             _ => {
                 if line.starts_with("    ") {
-                    Self::FrameContents { text: line }
+                    Ok(Self::FrameContents { text: line })
                 } else {
-                    Self::Exception(PyError::from(line))
+                    Ok(Self::Exception(Exception::try_from(line)?))
                 }
             }
         }
@@ -55,30 +60,35 @@ impl<'line> From<&'line str> for TracebackLine<'line> {
 pub(crate) struct FrameHeader<'line> {
     file_name: &'line str,
     pub(crate) function_name: &'line str,
-    pub(crate) line_number: &'line str,
+    pub(crate) line_number: usize,
 }
 
-impl<'line> From<&'line str> for FrameHeader<'line> {
-    fn from(line: &'line str) -> Self {
-        let mut words = line.split_whitespace();
-        let file_name = words.nth(1).unwrap();
-        let line_number = words.nth(1).unwrap().trim_end_matches(",");
-        let function_name = words.nth(1).unwrap();
-        Self {
-            file_name,
-            function_name,
-            line_number,
-        }
+impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
+    type Error = Error;
+
+    fn try_from(line: &'line str) -> Result<FrameHeader<'line>, Error> {
+        (|| {
+            let mut words = line.split_whitespace();
+            let file_name = words.nth(1)?;
+            let line_number = usize::from_str(words.nth(1)?.trim_end_matches(",")).ok()?;
+            let function_name = words.nth(1)?;
+            Some(FrameHeader {
+                file_name,
+                function_name,
+                line_number,
+            })
+        })()
+        .ok_or(Error::InvalidTraceback(line.to_string()))
     }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PyError {
+pub enum Exception {
     AssertionError,
     Other,
 }
 
-impl AsStr for PyError {
+impl AsStr for Exception {
     fn as_str(&self) -> &str {
         match self {
             Self::AssertionError => "AssertionError",
@@ -87,12 +97,17 @@ impl AsStr for PyError {
     }
 }
 
-impl From<&str> for PyError {
-    fn from(traceback: &str) -> Self {
-        let lastline = traceback.lines().last().unwrap();
-        match lastline {
-            "AssertionError" => Self::AssertionError,
-            _ => Self::Other,
-        }
+impl TryFrom<&str> for Exception {
+    type Error = Error;
+
+    fn try_from(traceback: &str) -> Result<Exception, Error> {
+        (|| {
+            let lastline = traceback.lines().last()?;
+            Some(match lastline {
+                "AssertionError" => Self::AssertionError,
+                _ => Self::Other,
+            })
+        })()
+        .ok_or(Error::InvalidTraceback(traceback.to_string()))
     }
 }

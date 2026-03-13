@@ -1,12 +1,10 @@
 //!Handling individual tests & their status
 
-use std::str::FromStr;
-
 use base_traits::AsStr;
 use ruff_python_ast::StmtFunctionDef;
 
 use crate::{
-    PyError, Traceback,
+    Error, Exception, Traceback,
     failures::TracebackLine,
     multiline::{Location, Multiline, MultilineMut},
 };
@@ -41,8 +39,8 @@ pub struct PythonTest<'name, 'suite, 'details> {
 impl PythonTest<'_, '_, '_> {
     /// Produce a test execution report.
     pub fn report(&self) -> Option<String> {
-        enum Prefix<'str> {
-            LineNumber(&'str str),
+        enum Prefix {
+            Text(String),
             Indent(usize),
         }
 
@@ -52,18 +50,18 @@ impl PythonTest<'_, '_, '_> {
 
         let mut frame_buf = String::new();
         match err {
-            PyError::AssertionError => {
+            Exception::AssertionError => {
                 let mut prefix = Prefix::Indent(0);
                 for line in tb.lines() {
                     match line {
-                        TracebackLine::TracebackHeader => (),
-                        TracebackLine::FrameHeader(frameheader) => {
+                        Ok(TracebackLine::TracebackHeader) => (),
+                        Ok(TracebackLine::FrameHeader(frameheader)) => {
                             frame_buf.clear(); // We only want details from the last frame
 
-                            let failure =
-                                Location::Line(usize::from_str(frameheader.line_number).unwrap());
+                            let failure = Location::Line(frameheader.line_number);
                             let testfn_def = Location::Offset(self.test_ast.range.start().into());
-                            let indent = frameheader.line_number.len() + 2;
+                            let line_no = frameheader.line_number.to_string();
+                            let indent = line_no.len() + 2;
 
                             frame_buf.push_line(0, ["==== ", frameheader.function_name, " ===="]);
                             self.full_src
@@ -71,22 +69,23 @@ impl PythonTest<'_, '_, '_> {
                                 .lines_to(&failure)
                                 .for_each(|line| frame_buf.push_line(indent, [line]));
 
-                            prefix = Prefix::LineNumber(frameheader.line_number);
+                            prefix = Prefix::Text(line_no);
                         }
-                        TracebackLine::FrameContents { text } => match prefix {
+                        Ok(TracebackLine::FrameContents { text }) => match prefix {
                             // TODO: compatibility python <3.13 ... need to manually recreate the
                             //       nice details that are in later version Tracebacks
-                            Prefix::LineNumber(lineno) => {
-                                frame_buf.push_line(0, [lineno, ": ", text]);
+                            Prefix::Text(lineno) => {
+                                frame_buf.push_line(0, [&lineno, ": ", text]);
                                 prefix = Prefix::Indent(lineno.len() + 2);
                             }
                             Prefix::Indent(indent) => {
                                 frame_buf.push_line(indent, [text]);
                             }
                         },
-                        TracebackLine::Exception(err) => {
+                        Ok(TracebackLine::Exception(err)) => {
                             frame_buf.push_line(0, [err.as_str()]);
                         }
+                        Err(err) => frame_buf.push_line(0, [err.to_string().as_str()]),
                     }
                 }
             }
@@ -102,7 +101,7 @@ pub enum TestStatus {
     NoRun,
     Running,
     Pass,
-    Fail(PyError, Traceback),
+    Fail(Exception, Traceback),
 }
 
 impl AsStr for TestStatus {
@@ -116,13 +115,15 @@ impl AsStr for TestStatus {
     }
 }
 
-impl From<(&str, &str)> for TestStatus {
-    fn from((status, traceback): (&str, &str)) -> Self {
+impl TryFrom<(&str, &str)> for TestStatus {
+    type Error = Error;
+
+    fn try_from((status, traceback): (&str, &str)) -> Result<Self, Self::Error> {
         match status {
-            "RUNNING" => Self::Running,
-            "PASS" => Self::Pass,
-            "FAIL" => Self::Fail(traceback.into(), traceback.into()),
-            _ => todo!("Make fallible"),
+            "RUNNING" => Ok(Self::Running),
+            "PASS" => Ok(Self::Pass),
+            "FAIL" => Ok(Self::Fail(traceback.try_into()?, traceback.into())),
+            _ => Err(Error::InvalidStatus(status.to_string())),
         }
     }
 }
