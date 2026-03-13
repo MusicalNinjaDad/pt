@@ -78,7 +78,7 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
                 line_number,
             })
         })()
-        .ok_or(Error::InvalidTraceback)
+        .ok_or(Error::InvalidTraceback(line.to_string()))
     }
 }
 
@@ -108,6 +108,6 @@ impl TryFrom<&str> for Exception {
                 _ => Self::Other,
             })
         })()
-        .ok_or(Error::InvalidTraceback)
+        .ok_or(Error::InvalidTraceback(traceback.to_string()))
     }
 }

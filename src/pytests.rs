@@ -85,7 +85,7 @@ impl PythonTest<'_, '_, '_> {
                         Ok(TracebackLine::Exception(err)) => {
                             frame_buf.push_line(0, [err.as_str()]);
                         }
-                        Err(_) => (), // Skip invalid lines
+                        Err(err) => frame_buf.push_line(0, [err.to_string().as_str()]),
                     }
                 }
             }
