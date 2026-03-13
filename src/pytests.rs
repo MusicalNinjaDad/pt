@@ -123,7 +123,7 @@ impl TryFrom<(&str, &str)> for TestStatus {
             "RUNNING" => Ok(Self::Running),
             "PASS" => Ok(Self::Pass),
             "FAIL" => Ok(Self::Fail(traceback.try_into()?, traceback.into())),
-            _ => Err(Error::InvalidStatus),
+            _ => Err(Error::InvalidStatus(status.to_string())),
         }
     }
 }

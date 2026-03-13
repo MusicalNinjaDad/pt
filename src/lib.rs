@@ -160,7 +160,7 @@ impl TestSuite {
 #[derive(Debug)]
 pub enum Error {
     InvalidTraceback(String),
-    InvalidStatus,
+    InvalidStatus(String),
     InvalidOutput(String),
     InvalidPython(ParseError),
 }
@@ -175,7 +175,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::InvalidTraceback(tb) => write!(f, "Invalid Traceback: {tb}"),
-            Error::InvalidStatus => write!(f, "Invalid Status"),
+            Error::InvalidStatus(status) => write!(f, "Invalid Status: {status}"),
             Error::InvalidOutput(line) => write!(f, "Invalid Output: {line}"),
             Error::InvalidPython(err) => write!(f, "{err}"),
         }
