@@ -67,18 +67,18 @@ impl<'line> TryFrom<&'line str> for FrameHeader<'line> {
     type Error = Error;
 
     fn try_from(line: &'line str) -> Result<FrameHeader<'line>, Error> {
-        (|| {
+        let header: Option<_> = try {
             let mut words = line.split_whitespace();
             let file_name = words.nth(1)?;
             let line_number = usize::from_str(words.nth(1)?.trim_end_matches(",")).ok()?;
             let function_name = words.nth(1)?;
-            Some(FrameHeader {
+            FrameHeader {
                 file_name,
                 function_name,
                 line_number,
-            })
-        })()
-        .ok_or(Error::InvalidTraceback(line.to_string()))
+            }
+        };
+        header.ok_or(Error::InvalidTraceback(line.to_string()))
     }
 }
 
@@ -101,13 +101,13 @@ impl TryFrom<&str> for Exception {
     type Error = Error;
 
     fn try_from(traceback: &str) -> Result<Exception, Error> {
-        (|| {
+        let exception: Option<_> = try {
             let lastline = traceback.lines().last()?;
-            Some(match lastline {
+            match lastline {
                 "AssertionError" => Self::AssertionError,
                 _ => Self::Other,
-            })
-        })()
-        .ok_or(Error::InvalidTraceback(traceback.to_string()))
+            }
+        };
+        exception.ok_or(Error::InvalidTraceback(traceback.to_string()))
     }
 }

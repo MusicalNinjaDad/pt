@@ -1,4 +1,5 @@
 #![feature(if_let_guard)]
+#![feature(try_blocks)]
 //! All core `pt` functionality ìs available as a library. This primarily consists of parsing and
 //! report / code generation.
 //!
