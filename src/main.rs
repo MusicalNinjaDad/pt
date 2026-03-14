@@ -117,10 +117,12 @@ impl<T: Termination> Try for Exit<T> {
 
     type Residual = Exit<Infallible>;
 
+    #[inline]
     fn from_output(output: Self::Output) -> Self {
         Self::Ok(output)
     }
 
+    #[inline]
     fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
         match self {
             Self::Ok(v) => ControlFlow::Continue(v),
@@ -133,6 +135,8 @@ impl<T: Termination> Try for Exit<T> {
 
 /// Boilerplate
 impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
+    #[inline]
+    #[track_caller]
     fn from_residual(residual: Exit<Infallible>) -> Self {
         match residual {
             Exit::TestsFailed => Exit::TestsFailed,
@@ -146,6 +150,8 @@ impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
 impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>>
     for Exit<T>
 {
+    #[inline]
+    #[track_caller]
     fn from_residual(residual: std::result::Result<Infallible, E>) -> Self {
         match residual {
             Result::Err(e) => e.into(),
