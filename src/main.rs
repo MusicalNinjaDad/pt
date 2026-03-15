@@ -1,20 +1,19 @@
+#![feature(never_type)]
 #![feature(try_trait_v2)]
 use std::{
-    convert::Infallible,
     env, fs, io,
     path::PathBuf,
     process::{Command, ExitCode},
     string::FromUtf8Error,
 };
 
-use core::ops::{ControlFlow, Try};
 use std::{
     io::{Write, stderr},
-    ops::FromResidual,
     process::Termination,
 };
 
 use pt::{TestStatus, TestSuite};
+use try_v2::{Try, Try_ConvertResult};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
@@ -40,6 +39,7 @@ fn main() -> Exit<()> {
 
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
+#[derive(Debug, Try, Try_ConvertResult)]
 enum Exit<T: Termination> {
     Ok(T),
     TestsFailed,
@@ -107,48 +107,6 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(4)
             }
-        }
-    }
-}
-
-/// Boilerplate
-impl<T: Termination> Try for Exit<T> {
-    type Output = T;
-
-    type Residual = Exit<Infallible>;
-
-    fn from_output(output: Self::Output) -> Self {
-        Self::Ok(output)
-    }
-
-    fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
-        match self {
-            Self::Ok(v) => ControlFlow::Continue(v),
-            Self::TestsFailed => ControlFlow::Break(Exit::TestsFailed),
-            Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
-            Self::InvalidInvocation(msg) => ControlFlow::Break(Exit::InvalidInvocation(msg)),
-        }
-    }
-}
-
-/// Boilerplate
-impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
-    fn from_residual(residual: Exit<Infallible>) -> Self {
-        match residual {
-            Exit::TestsFailed => Exit::TestsFailed,
-            Exit::InternalError(msg) => Exit::InternalError(msg),
-            Exit::InvalidInvocation(msg) => Exit::InvalidInvocation(msg),
-        }
-    }
-}
-
-/// Boilerplate Conversion
-impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>>
-    for Exit<T>
-{
-    fn from_residual(residual: std::result::Result<Infallible, E>) -> Self {
-        match residual {
-            Result::Err(e) => e.into(),
         }
     }
 }
