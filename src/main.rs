@@ -1,3 +1,4 @@
+#![feature(never_type)]
 #![feature(try_trait_v2)]
 use std::{
     convert::Infallible,
@@ -7,7 +8,6 @@ use std::{
     string::FromUtf8Error,
 };
 
-use core::ops::{ControlFlow, Try};
 use std::{
     io::{Write, stderr},
     ops::FromResidual,
@@ -15,6 +15,7 @@ use std::{
 };
 
 use pt::{TestStatus, TestSuite};
+use try_v2::Try;
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
@@ -40,6 +41,7 @@ fn main() -> Exit<()> {
 
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
+#[derive(Debug, Try)]
 enum Exit<T: Termination> {
     Ok(T),
     TestsFailed,
@@ -107,41 +109,6 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(4)
             }
-        }
-    }
-}
-
-/// Boilerplate
-impl<T: Termination> Try for Exit<T> {
-    type Output = T;
-
-    type Residual = Exit<Infallible>;
-
-    #[inline]
-    fn from_output(output: Self::Output) -> Self {
-        Self::Ok(output)
-    }
-
-    #[inline]
-    fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
-        match self {
-            Self::Ok(v) => ControlFlow::Continue(v),
-            Self::TestsFailed => ControlFlow::Break(Exit::TestsFailed),
-            Self::InternalError(msg) => ControlFlow::Break(Exit::InternalError(msg)),
-            Self::InvalidInvocation(msg) => ControlFlow::Break(Exit::InvalidInvocation(msg)),
-        }
-    }
-}
-
-/// Boilerplate
-impl<T: Termination> FromResidual<Exit<Infallible>> for Exit<T> {
-    #[inline]
-    #[track_caller]
-    fn from_residual(residual: Exit<Infallible>) -> Self {
-        match residual {
-            Exit::TestsFailed => Exit::TestsFailed,
-            Exit::InternalError(msg) => Exit::InternalError(msg),
-            Exit::InvalidInvocation(msg) => Exit::InvalidInvocation(msg),
         }
     }
 }
