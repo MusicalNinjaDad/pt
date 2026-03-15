@@ -1,7 +1,6 @@
 #![feature(never_type)]
 #![feature(try_trait_v2)]
 use std::{
-    convert::Infallible,
     env, fs, io,
     path::PathBuf,
     process::{Command, ExitCode},
@@ -10,12 +9,11 @@ use std::{
 
 use std::{
     io::{Write, stderr},
-    ops::FromResidual,
     process::Termination,
 };
 
 use pt::{TestStatus, TestSuite};
-use try_v2::Try;
+use try_v2::{Try, Try_ConvertResult};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
@@ -41,7 +39,7 @@ fn main() -> Exit<()> {
 
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
-#[derive(Debug, Try)]
+#[derive(Debug, Try, Try_ConvertResult)]
 enum Exit<T: Termination> {
     Ok(T),
     TestsFailed,
@@ -109,19 +107,6 @@ impl<T: Termination> Termination for Exit<T> {
                 _ = stderr().write(msg.as_bytes());
                 ExitCode::from(4)
             }
-        }
-    }
-}
-
-/// Boilerplate Conversion
-impl<T: Termination, E: Into<Exit<T>>> FromResidual<std::result::Result<Infallible, E>>
-    for Exit<T>
-{
-    #[inline]
-    #[track_caller]
-    fn from_residual(residual: std::result::Result<Infallible, E>) -> Self {
-        match residual {
-            Result::Err(e) => e.into(),
         }
     }
 }
