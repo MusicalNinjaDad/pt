@@ -1,19 +1,13 @@
 #![feature(never_type)]
 #![feature(try_trait_v2)]
-use std::{
-    env, fs, io,
-    path::PathBuf,
-    process::{Command, ExitCode},
-    string::FromUtf8Error,
-};
+use std::{env, fs, io, path::PathBuf, process::Command, string::FromUtf8Error};
 
-use std::{
-    io::{Write, stderr},
-    process::Termination,
-};
+use std::process::Termination as _T;
+
+use exit_safely::Termination;
+use try_v2::{Try, Try_ConvertResult};
 
 use pt::{TestStatus, TestSuite};
-use try_v2::{Try, Try_ConvertResult};
 
 fn main() -> Exit<()> {
     let id = "PT_CLI";
@@ -39,12 +33,26 @@ fn main() -> Exit<()> {
 
 /// Custom ExitCode handler. Using this rather than just calling `exit()` to allow for proper
 /// unwinding and Drops to occur.
-#[derive(Debug, Try, Try_ConvertResult)]
-enum Exit<T: Termination> {
-    Ok(T),
-    TestsFailed,
-    InternalError(String),
-    InvalidInvocation(String),
+/// based upon Pytest exit codes:
+///  Exit code 0:
+///   All tests were collected and passed successfully
+///  Exit code 1:
+///   Tests were collected and run but some of the tests failed
+///  Exit code 2:
+///   Test execution was interrupted by the user
+///  Exit code 3:
+///   Internal error happened while executing tests
+///  Exit code 4:
+///   pytest command line usage error
+///  Exit code 5:
+///   No tests were collected
+#[derive(Debug, Termination, Try, Try_ConvertResult)]
+#[repr(u8)]
+enum Exit<T: _T> {
+    Ok(T) = 0,
+    TestsFailed = 1,
+    InternalError(String) = 3,
+    InvalidInvocation(String) = 4,
 }
 
 impl From<TestSuite> for Exit<()> {
@@ -60,53 +68,21 @@ impl From<TestSuite> for Exit<()> {
 }
 
 /// UTF8 Errors return InternalError
-impl<T: Termination> From<FromUtf8Error> for Exit<T> {
+impl<T: _T> From<FromUtf8Error> for Exit<T> {
     fn from(err: FromUtf8Error) -> Self {
         Exit::InternalError(err.to_string())
     }
 }
 
 /// IO Errors return InternalError
-impl<T: Termination> From<io::Error> for Exit<T> {
+impl<T: _T> From<io::Error> for Exit<T> {
     fn from(err: io::Error) -> Self {
         Exit::InternalError(err.to_string())
     }
 }
 
-impl<T: Termination> From<pt::Error> for Exit<T> {
+impl<T: _T> From<pt::Error> for Exit<T> {
     fn from(err: pt::Error) -> Self {
         Exit::InternalError(err.to_string())
-    }
-}
-
-impl<T: Termination> Termination for Exit<T> {
-    /// Write msg to stderr then identify correct ExitCode
-    ///
-    /// based upon Pytest exit codes:
-    ///  Exit code 0:
-    ///   All tests were collected and passed successfully
-    ///  Exit code 1:
-    ///   Tests were collected and run but some of the tests failed
-    ///  Exit code 2:
-    ///   Test execution was interrupted by the user
-    ///  Exit code 3:
-    ///   Internal error happened while executing tests
-    ///  Exit code 4:
-    ///   pytest command line usage error
-    ///  Exit code 5:
-    ///   No tests were collected
-    fn report(self) -> ExitCode {
-        match self {
-            Exit::Ok(ok) => ok.report(),
-            Exit::TestsFailed => ExitCode::from(1),
-            Exit::InternalError(msg) => {
-                _ = stderr().write(msg.as_bytes());
-                ExitCode::from(3)
-            }
-            Exit::InvalidInvocation(msg) => {
-                _ = stderr().write(msg.as_bytes());
-                ExitCode::from(4)
-            }
-        }
     }
 }
