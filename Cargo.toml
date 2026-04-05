@@ -11,7 +11,7 @@ license = "MIT"
 
 [dependencies]
 base-traits = "0.0.13"
-exit_safely = "0.1.0"
+exit_safely = "0.2.0"
 indexmap = "2.13.0"
 ruff_python_ast = { git = "https://github.com/astral-sh/ruff.git" }
 ruff_python_parser = { git = "https://github.com/astral-sh/ruff.git" }
